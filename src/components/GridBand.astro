@@ -3,13 +3,20 @@
  * The ruled band the reference runs above and below its feature sections: a row
  * of square cells with a few filled in flat colour.
  *
- * SQUARE, AND EXACTLY RAIL TO RAIL.
+ * SQUARE, AND EXACTLY RAIL TO RAIL — ON THE VERTICAL.
  * The band is inset by the same expression `.rails` uses for its vertical lines,
- * so its edges land on them rather than running past into the gutter. Inside it
- * is a plain `repeat(var(--cols), 1fr)` grid whose cells carry `aspect-ratio: 1`
- * — so the cells are square by construction, they divide the rail-to-rail width
- * evenly by construction, and the band's height is whatever one cell comes to.
- * Nothing is measured and nothing needs re-tuning when the container changes.
+ * so its side edges land on them rather than running past into the gutter.
+ * Inside it is a plain `repeat(var(--cols), 1fr)` grid whose cells carry
+ * `aspect-ratio: 1` — so the cells are square by construction, they divide the
+ * rail-to-rail width evenly by construction, and the band's height is whatever
+ * one cell comes to. Nothing is measured and nothing needs re-tuning when the
+ * container changes.
+ *
+ * The band's own top and bottom rules are the exception: they run the full
+ * width of the viewport and cross the rails, which is what makes the rails read
+ * as two lines laid over a ruled sheet rather than as a box the page is drawn
+ * inside. They are pseudo-elements rather than borders because a border can
+ * only ever be as wide as its box.
  *
  * An earlier pass positioned everything with `calc(50% + n * cell)` off a fixed
  * cell size. That could not satisfy either half of this: the cells were not
@@ -55,7 +62,13 @@ interface Props {
 
 const { blocks = [], class: className = '' } = Astro.props;
 
-const COLS = { m: 6, t: 10, d: 14 };
+/**
+ * Deliberately coarse. An earlier pass ran 6/10/14 and the cells came out around
+ * 57px on a phone — fine enough that the band read as texture rather than as a
+ * ruled grid. Fewer columns is the only lever that makes a cell bigger, since
+ * the width is fixed by the rails and the height follows the width.
+ */
+const COLS = { m: 5, t: 8, d: 11 };
 
 /**
  * A different seed per block, so two blocks of the same colour on one page do
@@ -104,16 +117,48 @@ const at = (col: number, span: number, cols: number) => {
 
 <style>
   .band {
-    --cols: 6;
-    --blk-h: 16px;
+    --cols: 5;
+    --blk-h: 18px;
 
     position: relative;
-    /* The same expression `.rails` uses, so the band's edges land on the rails
+    /* The same expression `.rails` uses, so the band's sides land on the rails
        instead of running past them into the gutter. */
     margin-inline: calc(
       max(var(--gutter), calc(50% - var(--container) / 2)) - var(--rail-inset)
     );
-    border: 1px solid var(--rule);
+    border-inline: 1px solid var(--rule);
+  }
+
+  /* The two rules that cross the rails. `100vw` centred on the band, rather than
+     the gutter expression negated: the percentage in that expression resolves
+     against the band's own width down here, not the page's, so it would land
+     short. The viewport unit does not care what it is measured inside.
+
+     `100vw` includes the scrollbar, so on a desktop these overhang the visible
+     width by a few pixels. `html` is `overflow-x: clip`, so that is absorbed
+     rather than becoming a horizontal scroll — and overhanging is the right way
+     to be wrong here, since falling short would leave a visible gap at the edge.
+
+     Offset by -1px so they sit exactly where the old top and bottom borders
+     did, which keeps the band's rhythm against the sections either side. */
+  .band::before,
+  .band::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    width: 100vw;
+    height: 1px;
+    transform: translateX(-50%);
+    background: var(--rule);
+    pointer-events: none;
+  }
+
+  .band::before {
+    top: -1px;
+  }
+
+  .band::after {
+    bottom: -1px;
   }
 
   /**
@@ -147,13 +192,13 @@ const at = (col: number, span: number, cols: number) => {
   /* `nth-child`, not `nth-of-type`: the blocks are spans too, so `of-type`
      counts them in the same sequence and `:last-of-type` matches a block rather
      than the last cell. Cells are always children 1..14; blocks follow. */
-  .band__cell:nth-child(6) {
+  .band__cell:nth-child(5) {
     border-right: 0;
   }
 
   /* Cells past the breakpoint's column count are not rendered at all, so their
      borders cannot show up in the wrong place. */
-  .band__cell:nth-child(n + 7) {
+  .band__cell:nth-child(n + 6) {
     display: none;
   }
 
@@ -200,23 +245,23 @@ const at = (col: number, span: number, cols: number) => {
 
   @media (min-width: 48rem) {
     .band {
-      --cols: 10;
-      --blk-h: 20px;
+      --cols: 8;
+      --blk-h: 22px;
     }
 
-    .band__cell:nth-child(n + 7) {
+    .band__cell:nth-child(n + 6) {
       display: block;
     }
 
-    .band__cell:nth-child(6) {
+    .band__cell:nth-child(5) {
       border-right: 1px solid var(--rule);
     }
 
-    .band__cell:nth-child(10) {
+    .band__cell:nth-child(8) {
       border-right: 0;
     }
 
-    .band__cell:nth-child(n + 11) {
+    .band__cell:nth-child(n + 9) {
       display: none;
     }
 
@@ -227,19 +272,19 @@ const at = (col: number, span: number, cols: number) => {
 
   @media (min-width: 62.5em) {
     .band {
-      --cols: 14;
-      --blk-h: 24px;
+      --cols: 11;
+      --blk-h: 26px;
     }
 
-    .band__cell:nth-child(n + 11) {
+    .band__cell:nth-child(n + 9) {
       display: block;
     }
 
-    .band__cell:nth-child(10) {
+    .band__cell:nth-child(8) {
       border-right: 1px solid var(--rule);
     }
 
-    .band__cell:nth-child(14) {
+    .band__cell:nth-child(11) {
       border-right: 0;
     }
 
