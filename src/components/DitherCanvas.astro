@@ -598,6 +598,17 @@ const {
       if (build()) {
         paint();
         canvas.dataset.ready = '';
+        // The cancel above took the drift loop with it, and the only thing that
+        // starts that loop is the observer below — which will not fire again
+        // while the panel stays in view. ResizeObserver delivers an initial
+        // observation as soon as it observes, so this path runs once on every
+        // load, a moment after the observer started the loop: without this line
+        // the field paints one frame and then sits frozen.
+        //
+        // It reads as a phone-only fault because it is not one. On a desktop
+        // the first pointermove reaches `flood()`, which calls `run()` and
+        // quietly restarts everything; a touch screen never sends one.
+        if (drifts && inView && !reduced && !document.hidden) run();
       }
     }
 
