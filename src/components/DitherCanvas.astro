@@ -53,13 +53,15 @@ interface Props {
     | 'blush'
     | 'lavender'
     | 'ice'
+    | 'ash'
     | 'ink';
   /** Device pixels per dither cell. Smaller reads finer; costs more to paint. */
   cell?: number;
   /**
-   * Repaint the cells under the pointer from a second ramp — blue through sky
-   * to white — instead of pushing them up the base one. Turns the pointer trail
-   * from "a bit brighter here" into something that reads as interactive.
+   * Repaint the cells under the pointer from a second ramp — muted blue through
+   * sky to a soft near-white — instead of pushing them up the base one. Turns
+   * the pointer trail from "a bit brighter here" into something that reads as
+   * interactive.
    */
   hot?: boolean;
 }
@@ -131,6 +133,10 @@ const {
 
   .dither--ice {
     --dither-ground: var(--t-blue);
+  }
+
+  .dither--ash {
+    --dither-ground: var(--grey-200);
   }
 
   .dither--ink {
@@ -260,17 +266,29 @@ const {
   ];
 
   /**
-   * The pointer trail's own ramp: blue, through sky, to white. It is a separate
-   * ramp rather than more heat on the base one because pushing periwinkle
-   * further up its own ramp only ever gets you a paler periwinkle — there is
-   * nothing in it that reads as a deliberate response to the cursor.
+   * The pointer trail's own ramp: blue, through sky, to a soft near-white. It is
+   * a separate ramp rather than more heat on the base one because pushing
+   * periwinkle further up its own ramp only ever gets you a paler periwinkle —
+   * there is nothing in it that reads as a deliberate response to the cursor.
+   *
+   * It used to run pure #0000cd → #00b0ff → #ffffff. Two problems with that: the
+   * bottom of the ramp was fully saturated blue, which under the pointer read as
+   * a different site rather than as the hero reacting, and the top stop was
+   * paper white, which is where most of the trail's area ends up once the heat
+   * gain saturates — so the trail read as glare rather than as colour.
+   *
+   * This ramp drops the chroma at the dark end and stops the light end at
+   * #bad8f0, which is DARKER than the field's own pale stops. That inversion is
+   * the point: the trail no longer competes on brightness, so it reads as a
+   * patch of blue washing through the periwinkle rather than as a hole punched
+   * in it, and there is no white in it at any heat.
    */
   const HOT = [
-    [0, 0, 205],
-    [0, 92, 232],
-    [0, 176, 255],
-    [138, 218, 255],
-    [255, 255, 255],
+    [58, 92, 156],
+    [82, 124, 188],
+    [110, 158, 210],
+    [146, 190, 226],
+    [186, 216, 240],
   ];
 
   /**
@@ -303,6 +321,25 @@ const {
     [240, 251, 255],
   ];
 
+  /**
+   * Neutral, and light. The `grey` ramp is the dark one, for panels that carry
+   * white text; this one is for sitting BEHIND a cut-out photograph.
+   *
+   * It is the only ramp here with no hue at all, which is the point: the
+   * portraits are black and white, and any tint in the field behind them reads
+   * as a colour cast on the subject rather than as a ground. The span is kept
+   * narrow — #cfcfcf to #f0f0f0, well inside the grey ramp's own steps — so the
+   * field stays quiet enough that a head cut out against it does not look like
+   * it was pasted onto a different picture.
+   */
+  const ASH = [
+    [207, 207, 207],
+    [219, 219, 219],
+    [229, 229, 229],
+    [239, 239, 239],
+    [246, 246, 246],
+  ];
+
   const RAMPS: Record<string, number[][]> = {
     press: LAND,
     grey: GREY,
@@ -315,6 +352,7 @@ const {
     blush: BLUSH,
     lavender: LAVENDER,
     ice: ICE,
+    ash: ASH,
     ink: GREY,
   };
 
@@ -467,10 +505,12 @@ const {
             if (hot && h > 0.02 && h * 2.6 > bay) {
               ramp = HOT;
               cap = HOT.length - 1;
-              // Enough gain that the centre of the trail reaches the white stop
+              // Enough gain that the centre of the trail reaches the top stop
               // and the tail falls back through sky to blue. At 1.15 it topped
-              // out at sky and the trail read as one flat colour.
-              t = (0.1 + (a - 0.5) * 1.3 + h * 1.95) * cap;
+              // out mid-ramp and the trail read as one flat colour; at 1.95 the
+              // top stop covered most of the trail's area rather than its
+              // centre, which is the other half of why it read as too white.
+              t = (0.08 + (a - 0.5) * 1.15 + h * 1.5) * cap;
             } else {
               t = (0.42 + (a - 0.5) * 1.9 + (b - 0.5) * 0.55 + h) * cap;
             }
