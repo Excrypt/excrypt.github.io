@@ -1,14 +1,17 @@
 ---
+import { site } from '../../data/site';
+import DitherCanvas from '../DitherCanvas.astro';
+const { offer } = site;
 ---
 
 <section class="cta on-dark">
+  <DitherCanvas variant="field" tone="indigo" cell={7} hot seed={2071} />
+
   <div class="container cta__inner">
-    <h2 class="cta__title">
-      Find out what an assistant says about your shop today.
-    </h2>
+    <h2 class="cta__title">Your first month is the audit.</h2>
     <p class="lead cta__sub">
-      The audit is the first month's work. It is included, and you will see the answers
-      before you decide anything.
+      {offer.priceDisplay} for the first month, and it starts with the audit: what Google
+      and the assistants say about your shop today, in writing. {offer.terms}
     </p>
     <div class="cta__actions">
       <a class="pill pill--invert pill--lg" href="/contact/">
@@ -21,27 +24,33 @@
 
 <style>
   .cta {
-    background: var(--grey-950);
+    position: relative;
+    /* Painted ground under the dither, and the fallback if the canvas never
+       runs: deep indigo rather than the old near-black, so the band separates
+       from the periwinkle above it and the orange footer below without either
+       of them touching it. */
+    background: #000040;
     color: var(--white);
-    /* The same 7px halftone as the card media areas, so the darkest surface on
-       the site still reads as printed. */
-    background-image: radial-gradient(
-      color-mix(in srgb, var(--accent) 55%, transparent) 1.4px,
-      transparent 1.4px
-    );
-    background-size: 7px 7px;
+    overflow: hidden;
   }
 
   .cta__inner {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
     padding-block: var(--space-section);
+    /* A scrim behind the lock-up only, not a fill over the whole band: the
+       ramp's lightest stop already clears AA against white, so this is here to
+       stop the field churning under the type, and it has to stay weak enough
+       that the pixels are still the thing you notice. */
     background: radial-gradient(
-      120% 100% at 50% 0%,
-      transparent 0%,
-      var(--grey-950) 72%
+      80% 62% at 50% 46%,
+      color-mix(in srgb, #000028 72%, transparent) 0%,
+      color-mix(in srgb, #000028 34%, transparent) 62%,
+      transparent 100%
     );
   }
 
@@ -52,7 +61,9 @@
   .cta__sub {
     max-width: 52ch;
     margin-top: 18px;
-    color: var(--grey-400);
+    /* Lifted off grey-400: on indigo the cool grey goes muddy, and this line
+       carries the price. */
+    color: color-mix(in srgb, var(--white) 84%, transparent);
   }
 
   .cta__actions {
@@ -64,7 +75,7 @@
   }
 
   .cta__ghost {
-    border-color: var(--grey-700);
+    border-color: color-mix(in srgb, var(--white) 48%, transparent);
     color: var(--white);
   }
 

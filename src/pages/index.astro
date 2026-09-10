@@ -8,7 +8,9 @@ import HowItWorks from '../components/sections/HowItWorks.astro';
 import WhoWeAre from '../components/sections/WhoWeAre.astro';
 import Offer from '../components/sections/Offer.astro';
 import Faq from '../components/sections/Faq.astro';
-import CtaBand from '../components/sections/CtaBand.astro';
+// Held back, not deleted: the closing band is written and styled, but the
+// offer it makes is still being settled. Re-add both lines to bring it back.
+// import CtaBand from '../components/sections/CtaBand.astro';
 import GridBand from '../components/GridBand.astro';
 
 import { site, absoluteUrl } from '../data/site';
@@ -106,5 +108,5 @@ const schemas = [
     ]}
   />
 
-  <CtaBand />
+  {/* <CtaBand /> */}
 </BaseLayout>
