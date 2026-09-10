@@ -457,7 +457,37 @@ const first = searches[0];
         }, 210);
       };
 
-      timer = window.setTimeout(step, 5200);
+      /**
+       * Type the first answer in on arrival.
+       *
+       * `paint()` is only ever reached through `step()`, and the first step is
+       * 5.2s out, so without this the hero holds its server-rendered text for
+       * the whole opening of a first visit — long enough that the page reads as
+       * broken rather than as still, and long enough that someone who scrolls
+       * down and back comes back to a hero that has finally started.
+       *
+       * It paints `items[0]`, which is the item already on the page, so the
+       * text types itself in rather than jumping. The first rotation is then
+       * scheduled 5.2s from this paint — the same gap `step()` uses — so the
+       * intro joins the steady rhythm instead of sitting outside it.
+       *
+       * Fonts first, capped: `ltType` reveals by width, and a face landing
+       * mid-type would resize the line it is revealing. The cap means a slow
+       * font can delay the intro by 400ms, never by its own load time.
+       */
+      const intro = () => {
+        paint(items[0]);
+        timer = window.setTimeout(step, 5200);
+      };
+
+      if (document.fonts?.ready) {
+        Promise.race([
+          document.fonts.ready,
+          new Promise((r) => window.setTimeout(r, 400)),
+        ]).then(intro, intro);
+      } else {
+        intro();
+      }
 
       const hero = root.closest('.hero');
       const hold = (state: boolean) => () => {
