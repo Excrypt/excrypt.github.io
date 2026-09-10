@@ -101,7 +101,9 @@ const first = searches[0];
         </h1>
 
         <p class="hero__sub">
-          BriteUX gets decorators and distributors named in that answer.
+          <span class="mark mark--periwinkle"
+            >BriteUX gets decorators and distributors named in that answer.</span
+          >
         </p>
 
         <div class="hero__actions">
@@ -220,14 +222,32 @@ const first = searches[0];
       opacity 200ms linear;
   }
 
+  /* The subhead carries its own ground.
+     
+     It used to sit straight on the dither, and the field moves under it: the
+     `hot` pointer trail runs the ramp from a muted blue up to near-white, so
+     the same grey text was somewhere between comfortable and unreadable
+     depending on where the cursor had just been. A painted block takes the
+     field out of the question.
+     
+     The ground is an inline `.mark`, not a padded block on the paragraph.
+     `width: fit-content` collapsed the box to the WIDEST line, which meant the
+     shorter line floated in a slab of periwinkle that ran past the end of its
+     own text. `.mark` carries `box-decoration-break: clone`, so each wrapped
+     line gets its own box, hugging its own words — the same treatment as the
+     headline blocks above it.
+     
+     The line-height has to clear the mark's own vertical padding, or the boxes
+     on consecutive lines butt into each other and the gap between them closes
+     up into one slab again. */
   .hero__sub {
-    margin-top: 16px;
     max-width: 40ch;
+    margin-top: 16px;
     font-size: var(--fs-hero-sub);
     font-weight: 500;
     line-height: 1.5;
     letter-spacing: 0.02em;
-    color: var(--grey-800);
+    text-wrap: balance;
   }
 
   .hero__actions {
@@ -241,10 +261,15 @@ const first = searches[0];
     margin-top: 22px;
   }
 
+  /* Hugging, not stretched. `flex: 1 1 140px` made both pills grow to share the
+     row, so "Talk to us" and "What we check" came out the same width with the
+     shorter label swimming in its own padding. At `0 0 auto` each pill is as
+     wide as its own label, which is what the reference does and what makes the
+     pair read as two buttons rather than as a segmented control. */
   .hero__actions .pill {
-    flex: 1 1 140px;
+    flex: 0 0 auto;
     min-width: 0;
-    padding-inline: 12px;
+    padding-inline: 18px;
   }
 
   /* In flow, with a negative bottom margin. The margin pulls the frame's bottom
