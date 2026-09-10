@@ -27,8 +27,14 @@ export const site = {
   /** @placeholder legal entity name */
   legalName: 'BriteUX LLC',
 
-  /** @placeholder confirm the production domain before deploying */
-  url: 'https://briteux.com',
+  /**
+   * @placeholder confirm the production domain before deploying
+   *
+   * `SITE_URL` overrides this at build time so a preview deploy (GitHub Pages)
+   * gets correct canonicals, Open Graph URLs and a correct sitemap without the
+   * production domain being edited here. Unset, the production domain is used.
+   */
+  url: process.env.SITE_URL ?? 'https://briteux.com',
 
   /** Used as the <title> suffix and in WebSite schema. */
   tagline: 'Get your shop found by buyers using AI',
