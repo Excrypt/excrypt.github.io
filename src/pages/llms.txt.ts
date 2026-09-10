@@ -28,7 +28,8 @@ export const GET: APIRoute = async () => {
       'using Google or asking an AI assistant.',
     '',
     `Run by ${site.founders.map((f) => f.name).join(' and ')}, brothers whose family ` +
-      `has run a screen printing and embroidery shop since ${site.familyShopSince}.`,
+      `has run a contract-only apparel decorator — screen print, embroidery and DTF — ` +
+      `since ${site.familyShopSince}.`,
     '',
     '## The offer',
     '',

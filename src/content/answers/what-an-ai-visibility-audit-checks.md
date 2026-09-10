@@ -6,7 +6,7 @@ answer: >-
   yours, whether your site states your capabilities in plain language, whether that
   information is marked up so a machine can read it without guessing, and whether your
   business details agree everywhere they appear.
-author: Mark Deshler
+author: Blaid Nichols
 publishDate: 2026-02-03
 schemaType: FAQPage
 faq:

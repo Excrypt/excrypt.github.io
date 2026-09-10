@@ -1,6 +1,25 @@
 ---
+/**
+ * The founders.
+ *
+ * The portraits are cut-out black-and-white photographs on a drifting pixel
+ * field — see `Portrait.astro` for why the field is the neutral `ash` ramp and
+ * not one of the tinted ones.
+ *
+ * The two are seeded differently so the field behind each is a different
+ * picture. Same seed twice and the pair reads as one image cut in half.
+ *
+ * Imports are static because Astro's `<Image />` resolves and optimises at
+ * build time, so the files cannot come from `site.ts` as strings. The order
+ * here is the order of `site.founders` — Bryce first, then Blaid.
+ */
 import { site } from '../../data/site';
-import ImageSlot from '../ImageSlot.astro';
+import Portrait from '../Portrait.astro';
+import portraitBryce from '../../assets/portrait-bryce.png';
+import portraitBlaid from '../../assets/portrait-blaid.png';
+
+const portraits = [portraitBryce, portraitBlaid];
+const seeds = [4703, 8821];
 ---
 
 <section class="section" id="who-we-are">
@@ -14,7 +33,7 @@ import ImageSlot from '../ImageSlot.astro';
         {
           site.founders.map((founder, i) => (
             <figure class="who__person" style={`--i:${i}`}>
-              <ImageSlot alt={founder.photoAlt} ratio="4 / 5" tone="halftone--periwinkle" />
+              <Portrait src={portraits[i]} alt={founder.photoAlt} seed={seeds[i]} />
               <figcaption class="who__meta">
                 <p class="who__name">{founder.name}</p>
                 <p class="label">{founder.role}</p>
@@ -25,22 +44,28 @@ import ImageSlot from '../ImageSlot.astro';
         }
       </div>
 
+      {/* Every claim in here is checkable against Hightech Grafix's own
+          material — the year, the trade-only model, the two shifts, the
+          methods. Nothing about the shop is invented, because the section it
+          sits in carries two real names, two real faces and links to two real
+          profiles. */}
       <div class="who__story prose">
         <p class="lead">
-          Our dad opened the shop in {site.familyShopSince} with one four-colour manual
-          press and a used Tajima.
+          The family shop opened in Arlington in {site.familyShopSince}, contract only —
+          no retail, no walk-ins, nothing that competes with the people it prints for.
         </p>
         <p class="muted">
-          We spent our teenage years reclaiming screens, pulling test prints and watching
-          him get talked into marketing that never came to anything. Every year somebody
-          sold him a directory listing, a rebuilt website, or a package of posts nobody
-          read.
+          It runs two shifts now. Screen print, embroidery and DTF go out the door under
+          somebody else's name, and Blaid still sells for it. So we know what a blown
+          in-hands date costs a distributor, why most jobs go wrong on the receiving dock
+          rather than at the press, and why you will not quote twelve pieces in three
+          colours.
         </p>
         <p class="muted">
-          So we know what a blown in-hands date does to a week, and why you will not
-          quote twelve pieces in three colours. We are not going to explain your business
-          to you. We are going to make sure that when a buyer asks a machine who can do
-          the job, the machine knows your shop exists.
+          What nobody in that building ever solved was being found. The work that came in
+          came from people who already knew the number. We are not going to explain your
+          business to you. We are going to make sure that when a buyer asks a machine who
+          can do the job, the machine knows your shop exists.
         </p>
       </div>
     </div>

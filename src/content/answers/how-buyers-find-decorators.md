@@ -6,7 +6,7 @@ answer: >-
   already know, and a growing share act on the summary without clicking through to any
   shop's site. For a decorator that means the decision often happens before a buyer ever
   reaches your website.
-author: Ryan Deshler
+author: Bryce Nichols
 publishDate: 2026-01-14
 updatedDate: 2026-08-19
 schemaType: Article

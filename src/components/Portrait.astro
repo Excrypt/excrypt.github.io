@@ -1,0 +1,77 @@
+---
+/**
+ * A cut-out photograph on a pixel ground.
+ *
+ * The portraits are black-and-white subjects on transparency, so they need
+ * something behind them. A flat fill would read as a studio backdrop; the
+ * drifting dither field reads as the same material the rest of the page is
+ * made of, and it moves, which is what stops two head-and-shoulders shots from
+ * sitting on the page like ID badges.
+ *
+ * The ramp is `ash` — the one neutral ramp, and deliberately narrow. Anything
+ * with a hue in it casts colour onto a greyscale subject, and anything wider
+ * makes the field busy enough to compete with the face.
+ *
+ * THE FRAME IS SLIGHTLY LANDSCAPE, and the ratio is not a taste decision. The
+ * two sources are framed differently — one is a tight head-and-shoulders crop,
+ * the other a three-quarter shot — and `scripts/normalize-portraits.mjs`
+ * rewrites both onto a common frame with the heads at the same size and height.
+ * The tightest source has only so much image below the chin, so once the head
+ * is the size we want, with the little space above it that we want, the frame
+ * can only be so tall before that subject's shoulders stop reaching the floor.
+ * 800 x 690 is what falls out. If the script's parameters change it prints the
+ * new height, and this ratio has to follow it.
+ */
+import { Image } from 'astro:assets';
+import DitherCanvas from './DitherCanvas.astro';
+
+interface Props {
+  src: ImageMetadata;
+  alt: string;
+  /** Seeds the field, so the two portraits are not the same picture twice. */
+  seed?: number;
+  class?: string;
+}
+
+const { src, alt, seed = 1987, class: className = '' } = Astro.props;
+---
+
+<div class:list={['portrait', className]}>
+  <DitherCanvas variant="field" tone="ash" cell={4} seed={seed} />
+  <Image
+    class="portrait__img"
+    src={src}
+    alt={alt}
+    widths={[320, 480, 640, 800]}
+    sizes="(min-width: 48rem) 24vw, (min-width: 30rem) 42vw, 84vw"
+    format="webp"
+    quality={88}
+  />
+</div>
+
+<style>
+  .portrait {
+    /* The containing block for the dither, which is `position: absolute`. */
+    position: relative;
+    display: grid;
+    aspect-ratio: 800 / 690;
+    overflow: hidden;
+    border-radius: var(--r-md);
+    /* If the canvas never paints, this is what the subject sits on. */
+    background: var(--grey-200);
+  }
+
+  .portrait__img {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    /* The files are cut to the frame's own ratio, so this is a no-op on them —
+       it is here so a replacement that has not been through the script is
+       fitted rather than stretched, and is anchored to the bottom, where the
+       shoulders are. */
+    object-fit: contain;
+    object-position: center bottom;
+  }
+</style>

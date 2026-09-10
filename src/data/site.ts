@@ -76,32 +76,46 @@ export const site = {
     'https://www.facebook.com/briteux',
   ],
 
-  /** @placeholder the year the family shop opened */
-  familyShopSince: 1987,
+  /**
+   * The year Hightech Grafix was founded, per its own LinkedIn and PRINTING
+   * United's member spotlight. Not a placeholder any more — it is a checkable
+   * claim about a real company, and it also seeds the hero's dither field, so
+   * changing it repaints the hero.
+   */
+  familyShopSince: 2008,
 
-  /** @placeholder */
+  /**
+   * Real people, real profiles. The bios are written from what those profiles
+   * state and nothing else — Bryce's engineering title, Blaid's line of work —
+   * because these sit beside real names, real faces and links to the real
+   * accounts, and anything invented here is a claim about a person rather than
+   * placeholder copy.
+   *
+   * `sameAs` is what ties the Person schema to those profiles, so an assistant
+   * reading the page can confirm the two are the same person. Keep them exact.
+   */
   founders: [
     {
-      name: 'Ryan Deshler',
+      name: 'Bryce Nichols',
       role: 'Co-founder',
       bio:
-        'I ran press two and burned screens after school. I handle the audits and ' +
-        'the technical build.',
+        'I build software for a living — senior UX engineer by day. I run the ' +
+        'audits and build what comes out of them.',
       photoAlt:
-        'Ryan Deshler, co-founder of BriteUX, photographed in a screen printing shop ' +
-        'beside a manual press — waist up, natural light, no studio backdrop',
-      sameAs: ['https://www.linkedin.com/in/briteux-ryan'],
+        'Bryce Nichols, co-founder of BriteUX — black and white portrait, arms ' +
+        'folded, in a dark polo',
+      sameAs: ['https://www.linkedin.com/in/bryce-nichols-25615610b/'],
     },
     {
-      name: 'Mark Deshler',
+      name: 'Blaid Nichols',
       role: 'Co-founder',
       bio:
-        'I did the embroidery side and most of the customer calls. I handle the ' +
-        'monthly work and I am who you talk to.',
+        'I sell contract decoration for a living — screen print, embroidery and ' +
+        'DTF. I know the questions buyers ask, and I am who you talk to.',
       photoAlt:
-        'Mark Deshler, co-founder of BriteUX, photographed beside a multi-head ' +
-        'embroidery machine — waist up, natural light, no studio backdrop',
-      sameAs: ['https://www.linkedin.com/in/briteux-mark'],
+        'Blaid Nichols, co-founder of BriteUX — black and white portrait, arms ' +
+        'folded, in glasses and a work polo',
+      sameAs: ['https://www.linkedin.com/in/blaid-nichols-9056ba176/'],
     },
   ] satisfies Founder[],
 
