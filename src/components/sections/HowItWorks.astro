@@ -1,24 +1,37 @@
 ---
 /**
- * The three steps, as tinted blocks.
+ * The three steps, as a sticky intro beside a column of stacked cards.
  *
- * Each step carries one of the site's tint tokens, and its number sits on a
- * pixel badge drawn from a ramp hovering around that same tint — so the badge
- * reads as a deeper patch of the block it sits on rather than as a separate
+ * MODELLED ON the Performance Lab's "our process" section: the left column is
+ * the section head, `position: sticky`, and it holds while the right column of
+ * step cards scrolls past it.
+ *
+ * The reference's cards are white with a hairline border, flush against each
+ * other, and label each step with the word STEP at one end of a mono row and
+ * its number at the other. Ours diverge on both counts. They keep the site's
+ * tints, which is the one thing the brief asked to hold on to. And they sit
+ * apart rather than flush: the entrance below is staggered by scroll position,
+ * and a gap is what lets you see one card arriving while the one above it has
+ * already landed — flush, three tints running together read as one block
+ * sliding, which is a weaker version of the same move. "STEP" went too; it said
+ * nothing an ordered list of three cards under the heading "Audit, build, then
+ * every month" did not already say.
+ *
+ * Each card slides in from the right and fades up as it enters — the reference's
+ * own move, and the reason it is worth a few lines of JavaScript rather than
+ * being a static two-column layout. Nothing runs under `prefers-reduced-motion`
+ * or without JavaScript: the cards render in place, and the class that would
+ * offset them is only ever added by the script.
+ *
+ * MOBILE keeps the stack it had. Each card sticks below the header and the next
+ * scrolls over it. They stick at the same `top`, so a card fully replaces the
+ * one under it rather than leaving a sliver — with solid colour blocks a sliver
+ * reads as a stripe of the wrong colour rather than as a stack.
+ *
+ * The number sits on a pixel badge drawn from a ramp hovering around the card's
+ * own tint, so it reads as a deeper patch of the card rather than as a separate
  * object. Text is near-black on all of them, which is what those pastels are
  * for; white would fail contrast on every one.
- *
- * The number sits OUTSIDE its block, in a gutter to the left, so the block's
- * copy starts at its own left edge rather than being indented around it.
- *
- * MOBILE stacks the blocks: each sticks below the header and the next scrolls
- * over it. They stick at the same `top`, so a block fully replaces the one under
- * it rather than leaving a sliver — with solid colour blocks a sliver reads as a
- * stripe of the wrong colour rather than as a stack. The badges sit in the
- * gutter and land on each other for the same reason.
- *
- * There was a pixel rail down a left gutter connecting the badges. Removed at
- * the client's request; the tints carry the sequence now.
  */
 import DitherCanvas from '../DitherCanvas.astro';
 
@@ -55,40 +68,80 @@ const steps = [
 
 <section class="section" id="how-it-works">
   <div class="container">
-    <div class="section-head">
-      <h2>Audit, build, then <span class="hi">every month</span></h2>
-      <p class="lead">
-        Each step says what you have to do, because the real question is how much of
-        your time this costs.
-      </p>
-    </div>
+    <div class="process">
+      <div class="process__intro">
+        <h2>Audit, build, then <span class="hi">every month</span></h2>
+        <p class="lead">
+          Each step says what you have to do, because the real question is how much of
+          your time this costs.
+        </p>
+        <a class="pill pill--primary process__cta" href="/contact/">
+          Talk to us<span class="pill__chev" aria-hidden="true"></span>
+        </a>
+      </div>
 
-    <ol class="steps">
-      {
-        steps.map((step, i) => (
-          <li class="steps__item" data-tint={step.tint}>
-            <span class="steps__badge" aria-hidden="true">
-              <DitherCanvas variant="field" tone={step.tone} cell={3} seed={31 + i * 13} />
-              <span class="steps__n tnum">{step.n}</span>
-            </span>
-            <div class="steps__main">
-              <h3>{step.title}</h3>
+      <ol class="steps">
+        {
+          steps.map((step, i) => (
+            <li class="steps__item" data-tint={step.tint} data-step>
+              {/* The badge is a sibling of the heading, not a child of it:
+                  it holds a DitherCanvas, whose wrapper is a block-level
+                  element, and a block nested in a heading is invalid — in the
+                  paragraph this row was once written as, it was enough to close
+                  the element early and let the canvas fill the whole card. */}
+              <div class="steps__head">
+                <span class="steps__badge" aria-hidden="true">
+                  <DitherCanvas
+                    variant="field"
+                    tone={step.tone}
+                    cell={3}
+                    seed={31 + i * 13}
+                  />
+                  <span class="steps__n tnum">{step.n}</span>
+                </span>
+                <h3>{step.title}</h3>
+              </div>
               <p class="steps__body">{step.body}</p>
-            </div>
-          </li>
-        ))
-      }
-    </ol>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
   </div>
 </section>
 
 <style>
+  /* One column until the intro can hold beside the cards without either half
+     getting squeezed. Below that the intro is just a section head above them. */
+  .process__intro {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 28px;
+    text-align: left;
+  }
+
+  .process__intro h2 {
+    max-width: 20ch;
+  }
+
+  .process__intro .lead {
+    max-width: 46ch;
+    color: var(--text-muted);
+  }
+
+  /* A little more air above the button than the 14px that separates the lines
+     of copy, so it reads as the end of the block rather than as a fourth line
+     of it. */
+  .process__cta {
+    margin-top: 4px;
+  }
+
   .steps {
     display: grid;
-    gap: 8px;
     margin: 0;
-    /* The gutter the numbers live in. */
-    padding: 0 0 0 46px;
+    padding: 0;
     list-style: none;
   }
 
@@ -98,11 +151,18 @@ const steps = [
        block peeking out from under the next one reads as a stripe of the wrong
        colour, not as a stack. */
     top: 84px;
-    padding: 22px 20px;
+    padding: 20px;
     border-radius: var(--r-lg);
     background: var(--tint);
     /* Near-black on the tint. These pastels exist to carry dark text. */
     color: var(--grey-950);
+  }
+
+  /* The gap is a margin rather than a grid `gap`, because on the desktop stack
+     below it goes negative to close the seam between cards, and a grid gap
+     cannot. */
+  .steps__item + .steps__item {
+    margin-top: 8px;
   }
 
   .steps__item[data-tint='pink'] {
@@ -117,6 +177,19 @@ const steps = [
     --tint: var(--t-blue);
   }
 
+  /* --- the card's head ---
+     The numbered badge on its own line, the step's name under it. A wrapper
+     rather than markup nested in the heading: the badge holds a DitherCanvas,
+     whose wrapper is a block-level element, and a block inside a heading is
+     invalid. */
+
+  .steps__head {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
   .steps__item h3 {
     font-size: var(--fs-card);
     line-height: 1.08;
@@ -124,20 +197,19 @@ const steps = [
   }
 
   .steps__body {
-    margin-top: 8px;
+    margin-top: 10px;
     color: var(--grey-800);
   }
 
-  /* --- the numbered badge --- */
-
+  /* `flex: none` so the badge keeps its square: a flex item with a fixed width
+     is still allowed to shrink, and at 320px with a long step name it would. */
   .steps__badge {
-    position: absolute;
-    top: 20px;
-    left: -46px;
+    flex: none;
+    position: relative;
     display: grid;
     place-items: center;
-    width: 34px;
-    height: 34px;
+    width: 30px;
+    height: 30px;
     overflow: hidden;
     border-radius: 2px;
     background: var(--tint);
@@ -147,53 +219,145 @@ const steps = [
     position: relative;
     z-index: 1;
     font-family: var(--font-mono);
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     font-weight: 500;
     letter-spacing: 0.04em;
     color: var(--grey-950);
   }
 
-  /* At 320 the container already eats 80px, so a 46px gutter left the block
-     194px wide — about eleven characters a line. */
-  @media (max-width: 22.5rem) {
-    .steps {
-      padding-left: 36px;
+  @media (min-width: 48rem) {
+    .steps__item {
+      padding: 26px 24px;
     }
 
-    .steps__badge {
-      left: -36px;
-      width: 28px;
-      height: 28px;
-    }
-
-    .steps__n {
-      font-size: 0.75rem;
+    .steps__item + .steps__item {
+      margin-top: 12px;
     }
   }
 
-  @media (min-width: 48rem) {
-    /* One block per row, no stacking. */
-    .steps {
-      gap: 10px;
-      padding-left: 64px;
+  /* --- two columns, from the width where both halves fit --- */
+
+  @media (min-width: 62.5em) {
+    .process {
+      display: grid;
+      /* The intro takes a little under half. The reference runs 505/1265 with
+         the cards inset from the right rail; this is the same proportion at our
+         container width, with the cards holding the wider half so their body
+         copy never drops under about 44 characters a line. */
+      grid-template-columns: minmax(0, 0.86fr) minmax(0, 1fr);
+      gap: 0 clamp(48px, 6vw, 96px);
+      align-items: start;
     }
 
+    /* Holds while the cards go past. `top` clears the sticky header with the
+       same 84px the mobile stack uses, so the two modes are pinned to the same
+       line. `align-self: start` above is what makes this possible — a stretched
+       grid item is as tall as the row and has nothing to slide against. */
+    .process__intro {
+      position: sticky;
+      top: 84px;
+      gap: 18px;
+      margin-bottom: 0;
+    }
+
+    .process__intro .lead {
+      max-width: 38ch;
+    }
+
+    /* No longer a stack: the cards scroll normally past the held intro. */
     .steps__item {
-      /* `relative`, not `static`: the badge is positioned against it. */
-      position: relative;
-      top: auto;
-      padding: 32px 28px;
+      position: static;
+      padding: 30px 32px;
     }
 
-    .steps__badge {
-      top: 32px;
-      left: -64px;
-      width: 40px;
-      height: 40px;
+    /* Wide enough to read as three arrivals rather than one. The entrance below
+       is triggered per card as each crosses the trigger line, so the gap is
+       what the stagger is legible in: with the cards flush, the second starts
+       moving while the first is still finishing and the two edges travel as one
+       piece. */
+    .steps__item + .steps__item {
+      margin-top: 18px;
     }
 
-    .steps__n {
-      font-size: var(--fs-mono);
+    .steps__body {
+      max-width: 44ch;
+    }
+
+    /* The entrance. Cards start pushed off to the right and nearly transparent,
+       and the script releases each one as it comes into view — so they arrive
+       one after another at whatever pace the reader is scrolling, rather than
+       all at once on a timer.
+
+       Only ever applied by the script. Without JavaScript, or under reduced
+       motion, the cards are simply in place. */
+    .steps[data-anim] .steps__item {
+      opacity: 0.15;
+      transform: translate3d(56px, 0, 0);
+      will-change: transform, opacity;
+      transition:
+        transform 620ms cubic-bezier(0.22, 0.61, 0.36, 1),
+        opacity 420ms linear;
+    }
+
+    .steps[data-anim] .steps__item[data-in] {
+      opacity: 1;
+      transform: none;
     }
   }
 </style>
+
+<script>
+  /**
+   * Releases each step card as it enters the viewport, and re-arms it when the
+   * reader scrolls back above the section.
+   *
+   * The offset state lives behind `[data-anim]` on the list, which this script
+   * is the only thing that sets — so a page with the script blocked, or a
+   * reader who has asked for reduced motion, gets the cards where they belong
+   * rather than parked off to the right waiting for an observer that will never
+   * run.
+   *
+   * `rootMargin` pulls the trigger line up off the bottom edge: a card that
+   * starts moving the instant its first pixel appears finishes its travel below
+   * the fold, and the reader only ever sees it already arrived.
+   *
+   * RE-ARMING is deliberately one-sided. A card is reset only when it leaves
+   * BELOW the viewport, which is to say the reader scrolled back up past the
+   * section and is in a position to watch it play again. Resetting on any exit
+   * would also catch a card leaving over the TOP on the way down — and that
+   * card would visibly slide away as it went, which is not an entrance being
+   * replayed, it is the section coming apart behind you.
+   */
+  const list = document.querySelector<HTMLElement>('#how-it-works .steps');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (list && !reduced && 'IntersectionObserver' in window) {
+    const cards = [...list.querySelectorAll<HTMLElement>('[data-step]')];
+    list.dataset.anim = '';
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const card = entry.target as HTMLElement;
+
+          if (entry.isIntersecting) {
+            card.dataset.in = '';
+            return;
+          }
+
+          // `rootBounds` already accounts for `rootMargin`, so this compares
+          // against the same line the entrance triggers on. It is null in some
+          // cross-origin embeds, where leaving the card as-is is the safe read.
+          const below =
+            entry.rootBounds !== null &&
+            entry.boundingClientRect.top >= entry.rootBounds.bottom;
+
+          if (below) delete card.dataset.in;
+        });
+      },
+      { rootMargin: '0px 0px -12% 0px', threshold: 0 }
+    );
+
+    cards.forEach((card) => io.observe(card));
+  }
+</script>
