@@ -18,6 +18,15 @@
         "dev:lan"
       ],
       "port": 4321
+    },
+    {
+      "name": "briteux-built",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "preview:lan"
+      ],
+      "port": 4322
     }
   ]
 }
