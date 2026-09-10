@@ -1,0 +1,124 @@
+---
+import { site } from '../../data/site';
+import ImageSlot from '../ImageSlot.astro';
+---
+
+<section class="section" id="who-we-are">
+  <div class="container">
+    <div class="section-head">
+      <h2>We grew up <span class="hi">around presses</span></h2>
+    </div>
+
+    <div class="who">
+      <div class="who__people">
+        {
+          site.founders.map((founder, i) => (
+            <figure class="who__person" style={`--i:${i}`}>
+              <ImageSlot alt={founder.photoAlt} ratio="4 / 5" tone="halftone--periwinkle" />
+              <figcaption class="who__meta">
+                <p class="who__name">{founder.name}</p>
+                <p class="label">{founder.role}</p>
+                <p class="muted who__bio">{founder.bio}</p>
+              </figcaption>
+            </figure>
+          ))
+        }
+      </div>
+
+      <div class="who__story prose">
+        <p class="lead">
+          Our dad opened the shop in {site.familyShopSince} with one four-colour manual
+          press and a used Tajima.
+        </p>
+        <p class="muted">
+          We spent our teenage years reclaiming screens, pulling test prints and watching
+          him get talked into marketing that never came to anything. Every year somebody
+          sold him a directory listing, a rebuilt website, or a package of posts nobody
+          read.
+        </p>
+        <p class="muted">
+          So we know what a blown in-hands date does to a week, and why you will not
+          quote twelve pieces in three colours. We are not going to explain your business
+          to you. We are going to make sure that when a buyer asks a machine who can do
+          the job, the machine knows your shop exists.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .who {
+    display: grid;
+    gap: 40px;
+  }
+
+  .who__people {
+    display: grid;
+    gap: 20px;
+  }
+
+  .who__person {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 10px;
+    border: 1px solid var(--rule);
+    border-radius: var(--r-xl);
+    background: var(--white);
+  }
+
+  .who__meta {
+    display: grid;
+    gap: 4px;
+    align-content: start;
+    flex: 1;
+    padding: 16px 12px 8px;
+  }
+
+  .who__name {
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  .who__bio {
+    margin-top: 8px;
+  }
+
+  /**
+   * Below 768px the founder cards stack, as the three-job cards do: each sticks
+   * below the header and the next scrolls over it, leaving a sliver.
+   *
+   * Same three dependencies as that section — the cards are opaque, nothing in
+   * the ancestor chain scrolls (`html` is `overflow-x: clip`, not `hidden`), and
+   * later cards paint over earlier ones by DOM order under the header's
+   * `z-index: 30`.
+   *
+   * From 30rem the pair sits side by side, where sticky has nothing to do: the
+   * two cards share a grid row, so neither can travel over the other. It is left
+   * on rather than switched off because it costs nothing and the single-column
+   * layout below 30rem is the case that matters.
+   */
+  @media (max-width: 47.999rem) {
+    .who__person {
+      position: sticky;
+      /* Clears the 72px sticky header, then one step per card. */
+      top: calc(84px + var(--i) * 14px);
+    }
+  }
+
+  @media (min-width: 30rem) {
+    .who__people {
+      grid-template-columns: 1fr 1fr;
+      align-items: stretch;
+    }
+  }
+
+  @media (min-width: 48rem) {
+    .who {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 56px;
+      align-items: start;
+    }
+  }
+</style>

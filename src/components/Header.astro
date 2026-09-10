@@ -1,0 +1,292 @@
+---
+import { site } from '../data/site';
+import Wordmark from './Wordmark.astro';
+
+const links = [
+  { href: '/#the-shift', label: 'The shift' },
+  { href: '/#what-we-do', label: 'What we do' },
+  { href: '/#how-it-works', label: 'How it works' },
+  { href: '/#who-we-are', label: 'Who we are' },
+  { href: '/#offer', label: 'Pricing' },
+  { href: '/answers/', label: 'Answers' },
+  { href: '/contact/', label: 'Contact' },
+];
+---
+
+<header class="hdr">
+  <div class="container hdr__inner">
+    <Wordmark />
+
+    <nav class="hdr__nav" aria-label="Main">
+      <a href="/#the-shift">The shift</a>
+      <a href="/#how-it-works">How it works</a>
+      <a href="/#offer">Pricing</a>
+      <a href="/answers/">Answers</a>
+      <a href="/contact/">Contact</a>
+    </nav>
+
+    <div class="hdr__actions">
+      <!-- <a class="hdr__phone tnum" href={`tel:${site.phone.e164}`}>{site.phone.display}</a> -->
+      <a class="pill pill--primary hdr__cta" href="/contact/">
+        Talk to us<span class="pill__chev" aria-hidden="true"></span>
+      </a>
+
+      {/* <details> so the menu opens and closes with no JavaScript at all. The
+          script below only adds Escape, scroll-lock and close-on-navigate. */}
+      <details class="menu" data-menu>
+        <summary class="menu__btn">
+          <span class="menu__icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Menu</span>
+        </summary>
+
+        <div class="menu__panel">
+          <nav class="menu__links" aria-label="Menu">
+            {links.map((l) => <a href={l.href}>{l.label}</a>)}
+          </nav>
+
+          <div class="menu__actions">
+            <a class="pill pill--quiet pill--lg tnum" href={`tel:${site.phone.e164}`}>
+              {site.phone.display}
+            </a>
+            <a class="pill pill--primary pill--lg" href="/contact/">
+              Talk to us<span class="pill__chev" aria-hidden="true"></span>
+            </a>
+          </div>
+        </div>
+      </details>
+    </div>
+  </div>
+</header>
+
+<style>
+  .hdr {
+    --hdr-h: 72px;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: color-mix(in srgb, var(--white) 88%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .hdr__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    min-height: var(--hdr-h);
+    padding-inline: calc(var(--gutter) - var(--rail-inset));
+  }
+
+  .hdr__nav {
+    display: none;
+    gap: 26px;
+  }
+
+  .hdr__nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    font-size: var(--fs-small);
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--grey-700);
+  }
+
+  .hdr__nav a:hover {
+    color: var(--black);
+  }
+
+  .hdr__actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .hdr__phone,
+  .hdr__cta {
+    display: none;
+  }
+
+  /* --- the hamburger --- */
+
+  .menu__btn {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin-right: -10px;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .menu__btn::-webkit-details-marker {
+    display: none;
+  }
+
+  /* Three rules that fold into an X. The middle bar is the element itself; the
+     outer two are its pseudo-elements, offset and then rotated onto it. */
+  .menu__icon,
+  .menu__icon::before,
+  .menu__icon::after {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--black);
+    transition:
+      transform 180ms ease,
+      opacity 120ms ease;
+  }
+
+  .menu__icon::before,
+  .menu__icon::after {
+    content: '';
+    position: absolute;
+  }
+
+  .menu__icon::before {
+    transform: translateY(-7px);
+  }
+
+  .menu__icon::after {
+    transform: translateY(7px);
+  }
+
+  .menu[open] .menu__icon {
+    background: transparent;
+  }
+
+  .menu[open] .menu__icon::before {
+    transform: rotate(45deg);
+  }
+
+  .menu[open] .menu__icon::after {
+    transform: rotate(-45deg);
+  }
+
+  /* --- the panel --- */
+
+  /* Absolute against .hdr, not fixed to the viewport. The header carries a
+     `backdrop-filter`, and any filter on an ancestor makes it the containing
+     block for fixed descendants — so `position: fixed` here was being scoped to
+     the header's own box and clipped to a 72px strip. The header is full-width
+     and stuck to the top, so absolute against it lands in the same place. */
+  .menu__panel {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 25;
+    width: 100vw;
+    height: calc(100dvh - var(--hdr-h));
+    display: flex;
+    flex-direction: column;
+    padding: 8px var(--gutter) calc(24px + env(safe-area-inset-bottom));
+    background: var(--white);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .menu__links {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .menu__links a {
+    padding: 18px 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: clamp(1.375rem, 1.2rem + 0.75vw, 1.75rem);
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    color: var(--black);
+    text-decoration: none;
+  }
+
+  .menu__links a:active {
+    color: var(--accent);
+  }
+
+  /* Pinned to the foot of the panel, as the reference's are. */
+  .menu__actions {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+    padding-top: 32px;
+  }
+
+  .menu__actions .pill {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: 12px;
+  }
+
+  @media (min-width: 62.5em) {
+    .menu {
+      display: none;
+    }
+
+    .hdr__nav {
+      display: flex;
+    }
+
+    .hdr__phone,
+    .hdr__cta {
+      display: inline-flex;
+    }
+
+    .hdr__phone {
+      align-items: center;
+      min-height: 24px;
+      font-size: var(--fs-small);
+      font-weight: 500;
+      text-decoration: none;
+    }
+
+    .hdr__phone:hover {
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+    }
+  }
+</style>
+
+<script>
+  /**
+   * The menu itself is a <details>, so it opens and closes with no JavaScript.
+   * This only adds the things <details> does not: Escape to close, locking the
+   * page behind the panel, and closing when a link is followed — including
+   * same-page anchors, where no navigation happens to close it for us.
+   */
+  const menu = document.querySelector<HTMLDetailsElement>('[data-menu]');
+
+  if (menu) {
+    const lock = () => {
+      document.documentElement.style.overflow = menu.open ? 'hidden' : '';
+    };
+
+    menu.addEventListener('toggle', lock);
+
+    menu.querySelectorAll('a').forEach((a) => {
+      a.addEventListener('click', () => {
+        menu.open = false;
+        lock();
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && menu.open) {
+        menu.open = false;
+        lock();
+        menu.querySelector<HTMLElement>('summary')?.focus();
+      }
+    });
+
+    // A resize past the breakpoint hides the button; leaving the panel open
+    // would lock scrolling with nothing on screen to close it.
+    matchMedia('(min-width: 62.5em)').addEventListener('change', (e) => {
+      if (e.matches && menu.open) {
+        menu.open = false;
+        lock();
+      }
+    });
+  }
+</script>

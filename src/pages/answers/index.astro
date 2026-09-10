@@ -1,0 +1,115 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { absoluteUrl } from '../../data/site';
+import { breadcrumbSchema } from '../../lib/schema';
+
+const answers = (await getCollection('answers', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf()
+);
+
+/** Calendar dates: format in UTC so a local timezone cannot shift the day. */
+const fmt = (d: Date) =>
+  d.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+
+const description =
+  'Plain answers to the questions promotional products buyers, distributors and ' +
+  'apparel decorators ask about getting found in search and in AI assistants.';
+
+const schemas = [
+  breadcrumbSchema([
+    { name: 'Home', url: absoluteUrl('/') },
+    { name: 'Answers', url: absoluteUrl('/answers/') },
+  ]),
+];
+---
+
+<BaseLayout title="Answers" description={description} path="/answers/" schemas={schemas}>
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h1>Answers</h1>
+        <p class="lead">{description}</p>
+      </div>
+
+      <ul class="answers">
+        {
+          answers.map((entry) => (
+            <li class="answers__item">
+              <h2 class="answers__title">
+                <a href={`/answers/${entry.id}/`}>{entry.data.title}</a>
+              </h2>
+              <p class="muted answers__answer">{entry.data.answer}</p>
+              <p class="small muted answers__meta">
+                Written by {entry.data.author}. Published <time datetime={iso(entry.data.publishDate)}>{fmt(entry.data.publishDate)}</time>.
+              </p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .answers {
+    max-width: 860px;
+    margin-inline: auto;
+    padding: 0;
+    list-style: none;
+    border: 1px solid var(--rule);
+    border-radius: var(--r-lg);
+    background: var(--white);
+    overflow: clip;
+  }
+
+  .answers__item {
+    padding: 26px 24px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .answers__item:first-child {
+    border-top: 0;
+  }
+
+  .answers__item:hover {
+    background: var(--grey-25);
+  }
+
+  .answers__title {
+    max-width: 30ch;
+    font-size: var(--fs-h3);
+    font-weight: 500;
+  }
+
+  .answers__title a {
+    text-decoration: none;
+  }
+
+  .answers__title a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .answers__answer {
+    margin-top: 12px;
+    max-width: 70ch;
+  }
+
+  .answers__meta {
+    margin-top: 14px;
+    color: var(--grey-500);
+  }
+
+  @media (min-width: 48rem) {
+    .answers__item {
+      padding: 30px 32px;
+    }
+  }
+</style>

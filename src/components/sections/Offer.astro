@@ -1,0 +1,134 @@
+---
+import { site } from '../../data/site';
+const { offer } = site;
+---
+
+<section class="section" id="offer">
+  <div class="container">
+    <div class="section-head">
+      <h2>One plan. <span class="hi">{offer.priceDisplay} a month.</span></h2>
+      <p class="lead">No tiers, no setup fee, no annual commitment. {offer.terms}</p>
+    </div>
+
+    <div class="offer">
+      <div class="offer__card">
+        <div class="offer__price-row">
+          <p class="offer__price tnum">{offer.priceDisplay}</p>
+          <p class="label">per {offer.billingPeriod}</p>
+        </div>
+
+        <ul class="offer__list">
+          {offer.includes.map((line) => <li>{line}</li>)}
+        </ul>
+
+        <p class="small muted offer__note">{offer.excluded}</p>
+
+        <a class="pill pill--primary pill--lg offer__cta" href="/contact/">
+          Talk to us<span class="pill__chev" aria-hidden="true"></span>
+        </a>
+      </div>
+
+      <div class="offer__own">
+        <span class="label label--accent">Ownership</span>
+        <h3 class="offer__own-title">You own it, not us</h3>
+        <div class="prose muted offer__own-body">
+          <p>{offer.ownership}</p>
+          <p>
+            The domain is registered in your name. The Google Business Profile is your
+            profile. Every account is created under your email and we are added to it. If
+            you stop working with us, you remove an admin and nothing else happens — the
+            site stays up, the reviews stay yours, the pages keep working.
+          </p>
+          <p>
+            That is the part most agencies leave vague, so we put it in writing on the
+            first invoice.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .offer {
+    display: grid;
+    gap: 20px;
+  }
+
+  .offer__card {
+    padding: 26px 22px;
+    border: 1px solid var(--rule);
+    border-radius: var(--r-xl);
+    background: var(--white);
+  }
+
+  .offer__price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .offer__price {
+    font-size: clamp(2.75rem, 2rem + 3.4vw, 4rem);
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+
+  .offer__list {
+    margin: 24px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .offer__list li {
+    padding: 13px 0 13px 26px;
+    border-top: 1px solid var(--rule);
+    position: relative;
+  }
+
+  /* A small square, not a tick: the same pixel the hero is built from. */
+  .offer__list li::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 20px;
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+  }
+
+  .offer__note {
+    margin-top: 18px;
+  }
+
+  .offer__cta {
+    margin-top: 24px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .offer__own-title {
+    margin-top: 8px;
+  }
+
+  .offer__own-body {
+    margin-top: 14px;
+  }
+
+  @media (min-width: 48rem) {
+    .offer {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 48px;
+      align-items: start;
+    }
+
+    .offer__card {
+      padding: 32px;
+    }
+
+    .offer__cta {
+      width: auto;
+    }
+  }
+</style>

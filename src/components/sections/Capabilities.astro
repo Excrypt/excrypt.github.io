@@ -1,0 +1,685 @@
+---
+/**
+ * The assistants a buyer asks, as a vertical centre-stage carousel.
+ *
+ * It used to name decoration methods, which proved we knew the vocabulary. It
+ * now names the assistants a buyer actually asks, which is the thing the
+ * heading beside it promises.
+ *
+ * Names and marks come from `src/data/assistants.ts`, inlined at build time —
+ * see the note there about what these logos may and may not sit next to.
+ *
+ * THE CAROUSEL. Modelled on the reference: one card held in the centre at full
+ * size and full contrast, its neighbours tucked behind it above and below,
+ * smaller and faded, and the whole stack stepping one place at a time with a
+ * dwell in between. Vertical rather than horizontal, and it sits inline to the
+ * right of the copy from 768px up.
+ *
+ * Cards are positioned from a single `data-off` — the signed distance from the
+ * active card, wrapped to the shorter way round the loop, clamped to `far`.
+ * The script does nothing but write that attribute and advance an index; every
+ * position, scale and opacity is CSS, which is what keeps the tuning in one
+ * readable place instead of spread through the transform maths.
+ *
+ * Without JavaScript the first card renders active with the next two tucked
+ * below it — a still frame of the same picture, not an empty box. Under
+ * `prefers-reduced-motion` the stack unfolds into a plain scrollable column and
+ * nothing advances.
+ */
+import { assistants } from '../../data/assistants';
+
+/** Offsets for the no-JS/first-paint frame: card 0 active, the rest behind it. */
+const initialOff = (i: number) => (i <= 2 ? String(i) : 'far');
+
+/**
+ * The two highlighted words rotate through the names this trade calls itself.
+ * Both slots tick together, so the line always reads as one pairing rather than
+ * catching a half-swapped state.
+ *
+ * Spellings corrected from the brief: manufacturers, suppliers.
+ */
+const swaps = [
+  ['decorators', 'manufacturers'],
+  ['distributors', 'suppliers'],
+];
+---
+
+<div class="strip">
+  <div class="container strip__inner">
+    <p class="strip__title" aria-live="off">
+      Helping <span
+        class="mark mark--highlight strip__swap"
+        data-swap={JSON.stringify(swaps[0])}
+      >
+        <span class="strip__swap-view">
+          <span class="strip__swap-word">{swaps[0][0]}</span>
+        </span>
+      </span><br class="strip__br strip__br--narrow" /> and <br
+        class="strip__br strip__br--wide"
+      /><span
+        class="mark mark--highlight strip__swap"
+        data-swap={JSON.stringify(swaps[1])}
+      >
+        <span class="strip__swap-view">
+          <span class="strip__swap-word">{swaps[1][0]}</span>
+        </span>
+      </span><br class="strip__br strip__br--narrow" /> get seen by AI
+    </p>
+
+    <div class="strip__row">
+      <p class="muted strip__sub">
+        Get recommended by name when buyers ask an AI assistant.
+      </p>
+
+      <div class="cover" data-cover role="group" aria-label="Assistants buyers ask">
+        <ul class="cover__list">
+          {
+            assistants.map((a, i) => (
+              <li class="cover__item" data-off={initialOff(i)}>
+                <div class="cover__card">
+                  <span
+                    class="cover__logo"
+                    aria-hidden="true"
+                    style={a.color ? `color:${a.color}` : undefined}
+                    set:html={a.svg}
+                  />
+                  <span class="cover__name">{a.name}</span>
+                </div>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .strip {
+    /* No bottom rule. The grid band directly below draws its own top rule, and
+       the two stacked to 2px between the rails and 1px outside them — a line
+       that visibly changed weight across its own length. The band's rule is the
+       one to keep: it stops at the rails, where this one ran the full width and
+       crossed outside them. */
+    background: var(--white);
+    padding-block: 32px 40px;
+  }
+
+  .strip__title {
+    font-size: var(--fs-card);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: 0.01em;
+  }
+
+  /* The rotating slot. `inline-block` so its width can animate; a single word
+     on one line, so it never has to fragment the way the hero's headline mark
+     does.
+     
+     `vertical-align: bottom` puts the slot's PADDING box bottom on the line box
+     bottom, so `.mark`'s 0.18em bottom padding lifted the word that much above
+     the plain text beside it — measured at 4.31px against a 24px font, which is
+     0.18em to three decimals. Pushing the slot back down by the same amount
+     lands the two baselines together.
+     
+     This is tied to `.mark`'s padding-bottom in global.css. If that changes,
+     change this with it. */
+  .strip__swap {
+    display: inline-block;
+    position: relative;
+    top: 0.18em;
+    overflow: hidden;
+    vertical-align: bottom;
+    transition: width 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  .strip__swap-view {
+    display: block;
+    padding-bottom: 0.1em;
+    margin-bottom: -0.1em;
+    overflow: hidden;
+  }
+
+  .strip__swap-word {
+    display: block;
+    white-space: nowrap;
+    will-change: transform, opacity;
+  }
+
+  .strip__swap[data-anim='out'] .strip__swap-word {
+    transform: translateY(-108%);
+    opacity: 0;
+    transition:
+      transform 200ms cubic-bezier(0.55, 0, 1, 0.45),
+      opacity 160ms linear;
+  }
+
+  .strip__swap[data-anim='in'] .strip__swap-word {
+    transform: translateY(108%);
+    opacity: 0;
+  }
+
+  .strip__swap[data-anim='settle'] .strip__swap-word {
+    transform: translateY(0);
+    opacity: 1;
+    transition:
+      transform 300ms cubic-bezier(0.22, 0.61, 0.36, 1),
+      opacity 200ms linear;
+  }
+
+  /**
+   * Below 768px the title wraps, and the two words differ enough in length that
+   * swapping them moved the wrap point — a word jumped between lines and the
+   * page under it shifted. The break is forced instead, so the structure is the
+   * same whatever the words are.
+   *
+   * Two lockups, because one does not hold at both ends of the range. The
+   * container is only 240px wide at 320px, where "Helping manufacturers and"
+   * needs 244 and wraps anyway — which put the shift back:
+   *
+   *   < 360px   Helping <word> / and <word> / get seen by AI
+   *   >= 360px  Helping <word> and / <word> get seen by AI
+   *
+   * All six of those lines fit their width in both word states, measured, which
+   * is the whole point — a forced break that still wraps fixes nothing.
+   *
+   * Both are removed at 768px, where the title is one nowrap line.
+   * `white-space: nowrap` does NOT suppress an explicit <br>, so these have to
+   * be display:none there rather than relying on the nowrap.
+   */
+  .strip__br--narrow {
+    display: inline;
+  }
+
+  .strip__br--wide {
+    display: none;
+  }
+
+  @media (min-width: 22.5rem) {
+    .strip__br--narrow {
+      display: none;
+    }
+
+    .strip__br--wide {
+      display: inline;
+    }
+  }
+
+  .strip__sub {
+    margin-top: 10px;
+    /* Was 52ch, which ran to three lines once it had the full width. 72ch is as
+       wide as this should go — the brief's line-length floor is 75 characters
+       and a 90-character measure is genuinely harder to read, however few lines
+       it makes. */
+    max-width: 72ch;
+    font-size: var(--fs-body);
+    line-height: 1.5;
+  }
+
+  /* --- the carousel --- */
+
+  .cover {
+    position: relative;
+    height: 268px;
+    margin-top: 20px;
+    overflow: hidden;
+    /* The tucked cards leave rather than being cut at the edge. */
+    -webkit-mask-image: linear-gradient(
+      180deg,
+      transparent,
+      #000 16%,
+      #000 84%,
+      transparent
+    );
+    mask-image: linear-gradient(180deg, transparent, #000 16%, #000 84%, transparent);
+  }
+
+  .cover__list {
+    position: relative;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .cover__item {
+    /* Smaller than the card is tall, so each neighbour tucks *behind* the card
+       on stage rather than sitting in a gap above or below it. */
+    --step-1: 42px;
+    --step-2: 74px;
+
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    opacity: 0;
+    /* Everything past the second neighbour is parked at the far position so it
+       has somewhere to travel from when it becomes one. */
+    transform: translateY(-50%) scale(0.66);
+    transition:
+      transform 520ms cubic-bezier(0.22, 0.61, 0.36, 1),
+      opacity 420ms ease;
+    will-change: transform, opacity;
+  }
+
+  .cover__item[data-off='0'] {
+    z-index: 5;
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+
+  .cover__item[data-off='-1'],
+  .cover__item[data-off='1'] {
+    z-index: 4;
+    opacity: 0.58;
+    transform: translateY(calc(-50% - var(--step-1))) scale(0.87);
+  }
+
+  .cover__item[data-off='1'] {
+    transform: translateY(calc(-50% + var(--step-1))) scale(0.87);
+  }
+
+  .cover__item[data-off='-2'],
+  .cover__item[data-off='2'] {
+    z-index: 3;
+    opacity: 0.3;
+    transform: translateY(calc(-50% - var(--step-2))) scale(0.76);
+  }
+
+  .cover__item[data-off='2'] {
+    transform: translateY(calc(-50% + var(--step-2))) scale(0.76);
+  }
+
+  .cover__card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 56px;
+    padding: 12px 18px;
+    background: var(--c-stone);
+    white-space: nowrap;
+  }
+
+  /* The card on stage is the only white one, and the only one that lifts. */
+  .cover__item[data-off='0'] .cover__card {
+    background: var(--white);
+    box-shadow:
+      0 0 0 1px var(--rule),
+      0 14px 30px -18px rgba(0, 0, 0, 0.4);
+  }
+
+  /* The brands' own marks, in the brands' own colours. Not restyled: a
+     third-party mark recoloured into our accent reads as co-branding, and worse
+     now that these are the real marks rather than silhouettes.
+     
+     `:global` because the svg arrives through `set:html` and Astro's scoping
+     only reaches elements written in the template. */
+  .cover__logo {
+    display: flex;
+    flex: none;
+    width: 20px;
+    height: 20px;
+  }
+
+  .cover__logo :global(svg) {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* The site's mono label idiom, but not uppercased: these are product names
+     and `text-transform` would flatten ChatGPT and DeepSeek into CHATGPT and
+     DEEPSEEK. */
+  .cover__name {
+    font-family: var(--font-mono);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--grey-700);
+  }
+
+  /* WCAG 2.2.2 wants a way to stop moving content. With no controls on this
+     section these two are what is available, plus the reduced-motion opt-out
+     below, which stops it entirely. */
+  .cover:hover,
+  .cover:focus-within {
+    --cover-paused: 1;
+  }
+
+  /* Reduced motion: no stack, no stepping. A plain column of all of them. */
+  @media (prefers-reduced-motion: reduce) {
+    .cover {
+      height: auto;
+      max-height: 268px;
+      overflow-y: auto;
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+
+    .cover__list {
+      display: grid;
+      gap: 4px;
+      height: auto;
+    }
+
+    .cover__item {
+      position: static;
+      width: auto;
+      margin-left: 0;
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+
+    .cover__item[data-off='0'] .cover__card {
+      box-shadow: none;
+      background: var(--c-stone);
+    }
+  }
+
+  /* Tablet and up: the title takes its own full-width line and the carousel
+     turns horizontal to fill the space beside the standfirst, which is where
+     the section was empty. */
+  @media (min-width: 48rem) {
+    .strip {
+      padding-block: 40px 56px;
+    }
+
+    .strip__inner {
+      container-type: inline-size;
+    }
+
+    /* One line, as asked. Sized against the container so it cannot overflow if
+       the copy area narrows; in this layout the `--fs-card` cap is what binds
+       at every width the site supports, and the `cqw` term is the backstop. */
+    .strip__title {
+      white-space: nowrap;
+      font-size: min(var(--fs-card), 3.5cqw);
+    }
+
+    .strip__br {
+      display: none;
+    }
+
+    .strip__br--narrow,
+    .strip__br--wide {
+      display: none;
+    }
+
+    /* Title, standfirst, then the carousel across the full width beneath both.
+       It was a two-column row with the carousel beside the standfirst; centred
+       and full-width reads better and gives the deck room for both neighbours
+       instead of clipping them at 338px. */
+    .strip__row {
+      margin-top: 14px;
+    }
+
+    /* --- horizontal coverflow --- */
+
+    .cover {
+      height: 100px;
+      margin-top: 28px;
+      -webkit-mask-image: linear-gradient(
+        90deg,
+        transparent,
+        #000 12%,
+        #000 88%,
+        transparent
+      );
+      mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+    }
+
+    .cover__item {
+      /* Shorter than the card is wide, so neighbours tuck behind the card on
+         stage rather than sitting in gaps beside it. */
+      --step-1: 140px;
+      --step-2: 250px;
+
+      left: 50%;
+      right: auto;
+      width: 216px;
+      margin-left: -108px;
+      transform: translateY(-50%) scale(0.66);
+    }
+
+    .cover__item[data-off='0'] {
+      transform: translateY(-50%) scale(1);
+    }
+
+    .cover__item[data-off='-1'] {
+      transform: translate(calc(var(--step-1) * -1), -50%) scale(0.87);
+    }
+
+    .cover__item[data-off='1'] {
+      transform: translate(var(--step-1), -50%) scale(0.87);
+    }
+
+    .cover__item[data-off='-2'] {
+      transform: translate(calc(var(--step-2) * -1), -50%) scale(0.76);
+    }
+
+    .cover__item[data-off='2'] {
+      transform: translate(var(--step-2), -50%) scale(0.76);
+    }
+
+    /* 216px is what the longest name — Microsoft Copilot — needs at this size
+       once the logo, the gap and the card padding are counted. */
+    .cover__card {
+      padding-inline: 12px;
+    }
+  }
+
+  @media (min-width: 62.5em) {
+    .cover {
+      height: 108px;
+      margin-top: 34px;
+    }
+
+    .cover__item {
+      --step-1: 162px;
+      --step-2: 292px;
+
+      width: 248px;
+      margin-left: -124px;
+    }
+
+    .cover__card {
+      min-height: 60px;
+      padding-inline: 20px;
+    }
+
+    .cover__name {
+      font-size: 1rem;
+    }
+  }
+</style>
+
+<script>
+  /**
+   * Advances the carousel and writes each card's signed distance from the
+   * active one. Nothing else: the positions live in CSS.
+   *
+   * The distance is wrapped to the shorter way round the loop, so the card two
+   * places *before* the active one reads as -2 rather than n-2 and tucks above
+   * instead of flying the length of the stack to get there.
+   */
+  const DWELL = 2400;
+
+  document.querySelectorAll<HTMLElement>('[data-cover]').forEach((root) => {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const items = [...root.querySelectorAll<HTMLElement>('.cover__item')];
+    const n = items.length;
+    if (n < 3) return;
+
+    let active = 0;
+    let timer = 0;
+    let inView = false;
+
+    const place = () => {
+      for (let i = 0; i < n; i++) {
+        let off = i - active;
+        // Wrap to the shorter way round.
+        if (off > n / 2) off -= n;
+        if (off < -n / 2) off += n;
+        items[i].dataset.off = Math.abs(off) <= 2 ? String(off) : 'far';
+      }
+    };
+
+    const step = () => {
+      // `--cover-paused` is set by :hover and :focus-within, so the pause lives
+      // in CSS with the rest of the presentation rather than in two places.
+      const paused =
+        getComputedStyle(root).getPropertyValue('--cover-paused').trim() === '1';
+      if (!paused) {
+        active = (active + 1) % n;
+        place();
+      }
+      timer = window.setTimeout(step, DWELL);
+    };
+
+    const run = () => {
+      if (timer) return;
+      timer = window.setTimeout(step, DWELL);
+    };
+
+    const stop = () => {
+      clearTimeout(timer);
+      timer = 0;
+    };
+
+    place();
+
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          inView = entries.some((e) => e.isIntersecting);
+          if (inView && !document.hidden) run();
+          else stop();
+        },
+        { threshold: 0 }
+      );
+      io.observe(root);
+    } else {
+      inView = true;
+      run();
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stop();
+      else if (inView) run();
+    });
+  });
+</script>
+
+<script>
+  /**
+   * Rotates the two highlighted words in the title.
+   *
+   * Both slots run off one clock, so the line never catches a half-swapped
+   * pairing. Each slot's width is measured and set before the word changes, so
+   * the highlight block grows or shrinks into the new word instead of snapping
+   * and shoving the rest of the line sideways — the same move the hero makes.
+   *
+   * The measurement has to happen against the slot's own computed font, and has
+   * to be redone once webfonts land: measuring against the fallback face gives a
+   * width the real face then overflows.
+   *
+   * `aria-live="off"` on the title: it is read once, as rendered.
+   */
+  const SWAP = 3400;
+
+  const slots = [...document.querySelectorAll<HTMLElement>('[data-swap]')]
+    .map((el) => {
+      const view = el.querySelector<HTMLElement>('.strip__swap-view');
+      const word = el.querySelector<HTMLElement>('.strip__swap-word');
+      let words: string[] = [];
+      try {
+        words = JSON.parse(el.dataset.swap || '[]');
+      } catch {
+        words = [];
+      }
+      return { el, view, word, words, i: 0 };
+    })
+    .filter((s) => s.view && s.word && s.words.length > 1);
+
+  if (slots.length && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const ruler = document.createElement('span');
+    ruler.setAttribute('aria-hidden', 'true');
+    ruler.style.cssText =
+      'position:absolute;left:-9999px;top:0;white-space:nowrap;pointer-events:none';
+    document.body.appendChild(ruler);
+
+    /** The slot is border-box with padding, so the padding has to go back on. */
+    const boxWidth = (slot: (typeof slots)[number], text: string) => {
+      const wordStyle = getComputedStyle(slot.word!);
+      const slotStyle = getComputedStyle(slot.el);
+      ruler.style.font = wordStyle.font;
+      ruler.style.letterSpacing = wordStyle.letterSpacing;
+      ruler.textContent = text;
+      return (
+        ruler.getBoundingClientRect().width +
+        parseFloat(slotStyle.paddingLeft) +
+        parseFloat(slotStyle.paddingRight) +
+        1
+      );
+    };
+
+    const lock = () => {
+      for (const slot of slots) {
+        slot.el.style.width = `${boxWidth(slot, slot.words[slot.i])}px`;
+      }
+    };
+
+    lock();
+    addEventListener('resize', lock, { passive: true });
+    if (document.fonts?.ready) document.fonts.ready.then(lock).catch(() => {});
+
+    const strip = slots[0].el.closest('.strip');
+    let paused = false;
+    let timer = 0;
+
+    const step = () => {
+      // Clear before scheduling: without it a second entry would leave two
+      // timers running and the words would start double-stepping.
+      clearTimeout(timer);
+
+      if (paused || document.hidden) {
+        timer = window.setTimeout(step, 600);
+        return;
+      }
+
+      for (const slot of slots) {
+        const next = (slot.i + 1) % slot.words.length;
+        slot.el.dataset.anim = 'out';
+        slot.el.style.width = `${boxWidth(slot, slot.words[next])}px`;
+      }
+
+      window.setTimeout(() => {
+        for (const slot of slots) {
+          slot.i = (slot.i + 1) % slot.words.length;
+          slot.word!.textContent = slot.words[slot.i];
+          slot.el.dataset.anim = 'in';
+          // Force a reflow so the 'in' position is committed before 'settle'.
+          // rAF is throttled in a hidden document; a forced reflow is not, and
+          // this loop is driven by setTimeout, which keeps running.
+          void slot.word!.offsetHeight;
+          slot.el.dataset.anim = 'settle';
+        }
+      }, 210);
+
+      timer = window.setTimeout(step, SWAP);
+    };
+
+    timer = window.setTimeout(step, SWAP);
+
+    const hold = (state: boolean) => () => {
+      paused = state;
+    };
+    strip?.addEventListener('pointerenter', hold(true));
+    strip?.addEventListener('pointerleave', hold(false));
+    strip?.addEventListener('focusin', hold(true));
+    strip?.addEventListener('focusout', hold(false));
+  }
+</script>

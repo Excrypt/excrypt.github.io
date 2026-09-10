@@ -1,0 +1,641 @@
+---
+/**
+ * The hero device: a real iPhone photo on mobile, a real MacBook photo from
+ * 768px up, with a live assistant chat rendered *behind* the frame.
+ *
+ * WHY THE CHAT IS BEHIND, NOT ON TOP
+ * Both mockups ship with the screen area cut out to full transparency, so the
+ * frame is a mask. The chat is positioned to the hole and the PNG covers
+ * everything around it. The hole rectangles were measured off the files
+ * (flood-fill inwards from the border, then bbox the enclosed transparent
+ * region), not eyeballed:
+ *
+ *   hero-iphone.png    410x852   hole 377x818 at (17,17)   corner radius ~44px
+ *   hero-macbook.png   488x283   hole 404x237 at (42,6)    corner radius ~3px
+ *
+ * The chat box is deliberately a hair LARGER than the hole so no bright
+ * hairline of sky shows at the seam — the opaque frame covers the overhang.
+ * The corners are the exception: the frame is only ~17px thick there while the
+ * screen radius is ~44px, so square corners punched straight through the
+ * artwork. `--scr-r` rounds them, in `cqw` (1% of the device's own width) so it
+ * tracks the frame at every size instead of being a fixed pixel guess.
+ *
+ * If either file is replaced, re-measure and update the `--scr-*` values —
+ * nothing else about the chat depends on the frame.
+ *
+ * ONE COPY OF THE CHAT. The hero script drives `[data-lt-ask]`, `[data-lt-row]`
+ * and friends, so a second copy for a second breakpoint would silently give it
+ * six rows to type into. Both chromes — the iOS header and the web sidebar —
+ * are in the markup and swapped by media query; the thread between them is
+ * shared.
+ *
+ * Colours are sampled from ChatGPT's own dark web UI rather than guessed:
+ * canvas #212121, sidebar #181818, raised surfaces (user bubble, composer)
+ * #303030, sidebar hover #242424.
+ *
+ * Two deliberate departures: the result numbers carry the site accent, because
+ * a shop named in the answer is the entire point of the visual; and no
+ * assistant wordmark or logo appears anywhere in it, by standing request.
+ *
+ * The markup renders the FIRST query fully resolved, so with JavaScript off or
+ * under `prefers-reduced-motion` the screen still reads correctly.
+ */
+import { getImage } from 'astro:assets';
+import iphoneAsset from '../assets/hero-iphone.png';
+import macbookAsset from '../assets/hero-macbook.png';
+
+export interface Result {
+  name: string;
+  meta: string;
+}
+
+interface Props {
+  ask: string;
+  lede: string;
+  results: Result[];
+  close: string;
+}
+const { ask, lede, results, close } = Astro.props;
+
+const phone = await getImage({ src: iphoneAsset, format: 'webp', quality: 90 });
+const laptop = await getImage({ src: macbookAsset, format: 'webp', quality: 90 });
+
+/** Sidebar history. Invented, and chosen to sound like this buyer's own week. */
+const history = [
+  'Contract embroidery quotes',
+  'DTF minimums under 24',
+  'Screen print vendors, DFW',
+  'Team uniform turnaround',
+  'Local decorators',
+];
+---
+
+<div
+  class="device"
+  role="img"
+  aria-label="A phone and laptop showing an AI assistant answering a buyer's sourcing question by naming three shops"
+>
+  <div class="ai">
+    <div class="ai__rail" aria-hidden="true">
+      <div class="ai__railtop">
+        <span class="ai__mark"></span>
+        <svg class="ai__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <rect x="3" y="4" width="18" height="16" rx="2.5"></rect>
+          <line x1="9.5" y1="4" x2="9.5" y2="20"></line>
+        </svg>
+      </div>
+
+      <span class="ai__railitem">
+        <svg class="ai__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3Z"></path>
+        </svg>New chat
+      </span>
+      <span class="ai__railitem">
+        <svg class="ai__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="11" cy="11" r="6.5"></circle>
+          <line x1="16" y1="16" x2="20.5" y2="20.5"></line>
+        </svg>Search chats
+      </span>
+      <span class="ai__railitem">
+        <svg class="ai__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <rect x="4" y="4" width="7" height="7" rx="1.4"></rect>
+          <rect x="13" y="4" width="7" height="7" rx="1.4"></rect>
+          <rect x="4" y="13" width="7" height="7" rx="1.4"></rect>
+          <rect x="13" y="13" width="7" height="7" rx="1.4"></rect>
+        </svg>Library
+      </span>
+
+      <span class="ai__raillabel">Chats</span>
+      {
+        history.map((h, i) => (
+          <span class:list={['ai__railchat', i === 0 && 'is-on']}>{h}</span>
+        ))
+      }
+    </div>
+
+    <div class="ai__main">
+      <div class="ai__bar" aria-hidden="true">
+        <span class="ai__burger"></span>
+        <span class="ai__model">Assistant<i class="ai__chev"></i></span>
+        <span class="ai__baracts">
+          <svg class="ai__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3Z"></path>
+          </svg>
+          <svg class="ai__ico" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <circle cx="5.5" cy="12" r="1.7"></circle>
+            <circle cx="12" cy="12" r="1.7"></circle>
+            <circle cx="18.5" cy="12" r="1.7"></circle>
+          </svg>
+        </span>
+      </div>
+
+      <div class="ai__thread">
+        <div class="ai__userturn">
+          <p class="ai__bubble"><span class="lt__ask" data-lt-ask>{ask}</span></p>
+        </div>
+
+        <div class="ai__reply">
+          <p class="ai__think" aria-hidden="true">
+            Thought for 4 seconds<i class="ai__chev ai__chev--r"></i>
+          </p>
+
+          <p class="ai__lede" data-lt-lede>{lede}</p>
+
+          <ul class="ai__results" data-lt-results>
+            {
+              results.map((r, i) => (
+                <li class="ai__row" data-lt-row>
+                  <span class="ai__n">{i + 1}</span>
+                  <span class="ai__cell">
+                    <span class="lt__name">{r.name}</span>
+                    <span class="ai__meta" data-lt-meta>{r.meta}</span>
+                  </span>
+                </li>
+              ))
+            }
+          </ul>
+
+          <p class="ai__close" data-lt-close>{close}</p>
+
+          <div class="ai__acts" aria-hidden="true">
+            <svg class="ai__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <rect x="8" y="8" width="12" height="12" rx="2"></rect>
+              <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path>
+            </svg>
+            <svg class="ai__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M4 11h3v9H4zM7 11l4-7a2 2 0 0 1 3 2l-1 5h5a2 2 0 0 1 2 2.4l-1.4 6A2 2 0 0 1 16.6 20H7"
+              ></path>
+            </svg>
+            <svg class="ai__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M4 13h3V4H4zM7 13l4 7a2 2 0 0 0 3-2l-1-5h5a2 2 0 0 0 2-2.4l-1.4-6A2 2 0 0 0 16.6 4H7"
+              ></path>
+            </svg>
+            <svg class="ai__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M4 9v6h3.5L13 20V4L7.5 9H4Z"></path>
+              <path d="M16.5 9.5a4 4 0 0 1 0 5"></path>
+            </svg>
+            <svg class="ai__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M20 12a8 8 0 1 1-2.3-5.6"></path>
+              <path d="M18 3v4h-4"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="ai__foot" aria-hidden="true">
+        <div class="ai__composer">
+          <span class="ai__plus"></span>
+          <span class="ai__ph">Ask anything</span>
+          <svg class="ai__ico ai__mic" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+            <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"></path>
+            <line x1="12" y1="18" x2="12" y2="21"></line>
+          </svg>
+          <span class="ai__voice"></span>
+        </div>
+        <p class="ai__disclaim">Answers can be wrong. Check important info.</p>
+      </div>
+    </div>
+  </div>
+
+  <picture>
+    <source
+      media="(min-width: 48rem)"
+      srcset={laptop.src}
+      width={laptop.attributes.width}
+      height={laptop.attributes.height}
+    />
+    <img
+      class="device__frame"
+      src={phone.src}
+      width={phone.attributes.width}
+      height={phone.attributes.height}
+      alt=""
+      decoding="async"
+      fetchpriority="high"
+    />
+  </picture>
+</div>
+
+<style>
+  /* Phone — the mobile default. Percentages are the measured screen hole. */
+  .device {
+    --dev-w: 232px;
+    --scr-l: 4.146%;
+    --scr-t: 1.995%;
+    --scr-w: 91.951%;
+    --scr-h: 96.009%;
+    /* ~44px of corner on a 410px-wide source. */
+    --scr-r: 10.7cqw;
+    --ai-font: 8.5px;
+    --ai-pad: 1.6em;
+
+    /* Sampled from ChatGPT's dark web UI. */
+    --ai-bg: #212121;
+    --ai-rail: #181818;
+    --ai-raise: #303030;
+    --ai-hover: #242424;
+    --ai-text: #ececec;
+    --ai-dim: #9b9b9b;
+    --ai-faint: #6e6e6e;
+    --ai-line: #4a4a4a;
+
+    position: relative;
+    container-type: inline-size;
+    width: 100%;
+    max-width: var(--dev-w);
+    margin-inline: auto;
+  }
+
+  /* The frame sits on top and masks the chat. Its own intrinsic ratio sets the
+     height of the whole block, so the two photos need no shared aspect. */
+  .device__frame {
+    position: relative;
+    z-index: 2;
+    display: block;
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 18px 34px rgba(0, 0, 0, 0.35));
+  }
+
+  .ai {
+    position: absolute;
+    top: var(--scr-t);
+    left: var(--scr-l);
+    z-index: 1;
+    display: flex;
+    width: var(--scr-w);
+    height: var(--scr-h);
+    border-radius: var(--scr-r);
+    background: var(--ai-bg);
+    color: var(--ai-text);
+    font-family: var(--font-sans);
+    font-size: var(--ai-font);
+    line-height: 1.5;
+    text-align: left;
+    letter-spacing: normal;
+    overflow: hidden;
+  }
+
+  .ai__ico {
+    flex: none;
+    width: 1.35em;
+    height: 1.35em;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* --- web sidebar: hidden on the phone --- */
+
+  .ai__rail {
+    display: none;
+    flex-direction: column;
+    gap: 0.7em;
+    width: 17.5%;
+    padding: 1em 0.75em;
+    background: var(--ai-rail);
+  }
+
+  .ai__railtop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5em;
+    color: var(--ai-dim);
+  }
+
+  .ai__mark {
+    width: 1.4em;
+    height: 1.4em;
+    border: 1.6px solid var(--ai-text);
+    border-radius: 50%;
+  }
+
+  .ai__railitem {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    color: var(--ai-text);
+    white-space: nowrap;
+  }
+
+  .ai__raillabel {
+    margin-top: 0.8em;
+    color: var(--ai-faint);
+  }
+
+  .ai__railchat {
+    padding: 0.4em 0.55em;
+    margin-inline: -0.55em;
+    border-radius: 0.55em;
+    color: var(--ai-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ai__railchat.is-on {
+    background: var(--ai-hover);
+    color: var(--ai-text);
+  }
+
+  /* --- main column --- */
+
+  .ai__main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .ai__bar {
+    display: flex;
+    align-items: center;
+    gap: 0.7em;
+    flex: none;
+    /* Clears the dynamic island on the phone. */
+    padding: 3.6em 1.3em 0.5em;
+    color: var(--ai-text);
+  }
+
+  /* Hamburger: a two-rule glyph in a soft disc, as the iOS app draws it. */
+  .ai__burger {
+    position: relative;
+    width: 2.1em;
+    height: 2.1em;
+    border-radius: 50%;
+    background: var(--ai-raise);
+  }
+
+  .ai__burger::before,
+  .ai__burger::after {
+    content: '';
+    position: absolute;
+    left: 0.6em;
+    width: 0.95em;
+    height: 1.3px;
+    border-radius: 1px;
+    background: var(--ai-text);
+  }
+
+  .ai__burger::before {
+    top: 0.85em;
+  }
+
+  .ai__burger::after {
+    top: 1.2em;
+    width: 0.62em;
+  }
+
+  /* The model switcher. A bare chevron read as a stray glyph, and the real
+     product name is deliberately not used here, so it carries a neutral word. */
+  .ai__model {
+    display: none;
+    align-items: center;
+    gap: 0.4em;
+    font-weight: 500;
+    color: var(--ai-text);
+    white-space: nowrap;
+  }
+
+  .ai__chev {
+    width: 0.4em;
+    height: 0.4em;
+    border-right: 1.3px solid var(--ai-dim);
+    border-bottom: 1.3px solid var(--ai-dim);
+    transform: rotate(45deg) translateY(-0.12em);
+  }
+
+  .ai__chev--r {
+    margin-left: 0.55em;
+    transform: rotate(-45deg) translate(-0.1em, 0.1em);
+  }
+
+  .ai__baracts {
+    display: flex;
+    align-items: center;
+    gap: 0.8em;
+    margin-left: auto;
+    color: var(--ai-text);
+  }
+
+  /* --- the thread --- */
+
+  .ai__thread {
+    flex: 1;
+    min-height: 0;
+    padding-inline: var(--ai-pad);
+  }
+
+  .ai__userturn {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  /* The user's turn is the only bubble. The assistant's is plain body text on
+     the canvas, which is the single most recognisable thing about this UI. */
+  .ai__bubble {
+    max-width: 82%;
+    padding: 0.6em 1em;
+    border-radius: 1.3em;
+    background: var(--ai-raise);
+  }
+
+  .ai__reply {
+    margin-top: 1.5em;
+  }
+
+  .ai__think {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1em;
+    color: var(--ai-dim);
+  }
+
+  .ai__results {
+    display: grid;
+    gap: 0.85em;
+    margin: 1em 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ai__row {
+    display: grid;
+    grid-template-columns: 1.4em minmax(0, 1fr);
+  }
+
+  .ai__n {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .ai__cell {
+    min-width: 0;
+  }
+
+  .ai__meta {
+    display: block;
+    color: var(--ai-dim);
+  }
+
+  .ai__close {
+    margin-top: 1.2em;
+  }
+
+  /* Typed lines. `steps()` is set from the script to the character count. */
+  .lt__ask,
+  .lt__name {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .lt__name {
+    font-weight: 600;
+  }
+
+  /* Everything the script swaps rather than types fades in, so the answer
+     assembles instead of snapping. */
+  .ai__lede,
+  .ai__meta,
+  .ai__close {
+    transition: opacity 260ms ease;
+  }
+
+  .ai__lede[data-fade='out'],
+  .ai__meta[data-fade='out'],
+  .ai__close[data-fade='out'] {
+    opacity: 0;
+    transition: none;
+  }
+
+  .ai__acts {
+    display: flex;
+    gap: 1.1em;
+    margin-top: 1.4em;
+    color: var(--ai-dim);
+  }
+
+  /* --- composer --- */
+
+  .ai__foot {
+    flex: none;
+    padding: 0 var(--ai-pad) 1.3em;
+  }
+
+  .ai__composer {
+    display: flex;
+    align-items: center;
+    gap: 0.75em;
+    padding: 0.75em 0.75em 0.75em 0.95em;
+    border-radius: 1.7em;
+    background: var(--ai-raise);
+  }
+
+  .ai__plus {
+    position: relative;
+    flex: none;
+    width: 0.9em;
+    height: 0.9em;
+  }
+
+  .ai__plus::before,
+  .ai__plus::after {
+    content: '';
+    position: absolute;
+    inset: 50% 0 auto;
+    height: 1.4px;
+    border-radius: 1px;
+    background: var(--ai-text);
+  }
+
+  .ai__plus::after {
+    inset: 0 50% auto auto;
+    width: 1.4px;
+    height: 100%;
+  }
+
+  .ai__ph {
+    flex: 1;
+    min-width: 0;
+    color: var(--ai-dim);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .ai__mic {
+    color: var(--ai-dim);
+  }
+
+  /* The one light element on the screen, exactly as the real composer does it. */
+  .ai__voice {
+    flex: none;
+    width: 2em;
+    height: 2em;
+    border-radius: 50%;
+    background:
+      linear-gradient(var(--ai-bg) 0 0) center / 0.16em 0.5em no-repeat,
+      linear-gradient(var(--ai-bg) 0 0) center left 0.58em / 0.16em 0.8em no-repeat,
+      linear-gradient(var(--ai-bg) 0 0) center right 0.58em / 0.16em 0.8em no-repeat,
+      #fff;
+  }
+
+  .ai__disclaim {
+    display: none;
+    margin-top: 0.85em;
+    color: var(--ai-faint);
+    font-size: 0.88em;
+    text-align: center;
+  }
+
+  /* --- laptop, from tablet up --- */
+  @media (min-width: 48rem) {
+    .device {
+      --dev-w: 700px;
+      --scr-l: 7.807%;
+      --scr-t: 1.12%;
+      --scr-w: 84.6%;
+      --scr-h: 87.746%;
+      --scr-r: 0.5cqw;
+      --ai-font: 9.5px;
+      --ai-pad: 2.2em;
+    }
+
+    .ai__rail {
+      display: flex;
+    }
+
+    .ai__burger {
+      display: none;
+    }
+
+    .ai__model {
+      display: flex;
+    }
+
+    .ai__bar {
+      /* No island up here — the notch is inside the bezel, above the screen. */
+      padding: 1em 1.4em 0.5em;
+    }
+
+    /* The web thread is a centred column, not full-bleed. */
+    .ai__thread,
+    .ai__foot {
+      width: min(100%, 44em);
+      margin-inline: auto;
+    }
+
+    .ai__disclaim {
+      display: block;
+    }
+  }
+
+  @media (min-width: 62.5em) {
+    .device {
+      --dev-w: 920px;
+      --ai-font: 11.5px;
+    }
+  }
+</style>

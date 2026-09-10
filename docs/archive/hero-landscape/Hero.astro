@@ -1,0 +1,343 @@
+---
+import { site } from '../../data/site';
+import DitherCanvas from '../DitherCanvas.astro';
+
+/**
+ * The rotating half of the headline: real sourcing questions a buyer would put
+ * to an assistant. The first one is rendered into the HTML, so the <h1> reads as
+ * a complete, stable sentence for crawlers and for anyone whose JavaScript never
+ * runs.
+ */
+const searches = [
+  '500 shirts printed.',
+  '300 hoodies embroidered.',
+  'contract screen printing.',
+  'DTF under 24 pieces.',
+  'team uniforms by Friday.',
+  'polos for a trade show.',
+];
+---
+
+<section class="hero grid-motif">
+  <div class="container">
+    <div class="hero__frame">
+      <DitherCanvas seed={site.familyShopSince} />
+
+      <div class="hero__content">
+        <h1 class="hero__title">
+          <span class="hero__line">
+            <span class="mark"
+              >Buyers are asking <br class="hero__br" />AI where to get</span
+            >
+          </span>
+          <span class="hero__line">
+            <span class="mark hero__rot" data-rotator={JSON.stringify(searches)}>
+              <span class="hero__rot-view">
+                <span class="hero__rot-word">{searches[0]}</span>
+              </span>
+            </span>
+          </span>
+        </h1>
+
+        <p class="hero__sub">
+          BriteUX gets decorators and distributors named in that answer.
+        </p>
+
+        <div class="hero__actions">
+          <a class="pill pill--primary pill--lg" href="/contact/">
+            Talk to us<span class="pill__chev" aria-hidden="true"></span>
+          </a>
+          <a
+            class="pill pill--quiet pill--lg"
+            href="/answers/what-an-ai-visibility-audit-checks/"
+          >
+            What we check
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<style>
+  /* Not full-bleed. The picture is a contained block inside the content column,
+     with the page's vertical rails running down its edges — the reference's
+     composition, and the reason the page reads as one sheet. */
+  .hero {
+    padding-block: 0 0;
+  }
+
+  .hero__frame {
+    position: relative;
+    /* Their block sits at 24px from the viewport edge while the text inside
+       stays on the 40px content line. This is that offset. */
+    margin-inline: calc(var(--rail-inset) * -1);
+    display: grid;
+    align-content: start;
+    justify-items: center;
+    /* Measured off their mobile hero: the media block is 399px tall at 390px
+       wide. A vh-based height ran to 658px here and left the picture stranded
+       below the fold. */
+    min-height: 400px;
+    padding-block: 44px 0;
+    background: var(--sky);
+    overflow: hidden;
+  }
+
+  .hero__content {
+    position: relative;
+    z-index: 2;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding-inline: 16px;
+    text-align: center;
+  }
+
+  /* This has to stay a plain block. As a flex column the two spans became flex
+     items, which blockifies them — an inline-block cannot fragment, so
+     `box-decoration-break: clone` had nothing to clone and the highlight painted
+     as one full-width rectangle with the text floating inside it. As inline
+     boxes each wrapped line gets its own box, hugging its own words. */
+  .hero__title {
+    display: block;
+    max-width: 100%;
+    font-size: var(--fs-h1);
+    line-height: 1.34;
+  }
+
+  /* A block per line of the lock-up. It gives `text-wrap: balance` something to
+     balance — without it the first line broke as "…where to / get" and left an
+     orphan — while the mark inside stays inline so it still fragments and hugs. */
+  .hero__line {
+    display: block;
+    text-wrap: balance;
+  }
+
+  @media (min-width: 48rem) {
+    .hero__br {
+      display: none;
+    }
+  }
+
+  /* The rotator. Width is animated in script from a measured value so the orange
+     block physically resizes as the phrase changes, rather than snapping. */
+  .hero__rot {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    vertical-align: bottom;
+    transition: width 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  .hero__rot-view {
+    display: block;
+    /* Padded so descenders in the rolling word are not clipped by the mark's
+       own padding box. */
+    padding-bottom: 0.08em;
+    margin-bottom: -0.08em;
+    overflow: hidden;
+  }
+
+  .hero__rot-word {
+    display: block;
+    will-change: transform, opacity;
+  }
+
+  /* Below the breakpoint the phrase wraps and the block sizes itself; the width
+     animation is a wide-viewport affordance only. Script matches this. */
+  @media (min-width: 48rem) {
+    .hero__rot-word {
+      white-space: nowrap;
+    }
+  }
+
+  .hero__rot[data-anim='out'] .hero__rot-word {
+    transform: translateY(-108%);
+    opacity: 0;
+    transition:
+      transform 200ms cubic-bezier(0.55, 0, 1, 0.45),
+      opacity 160ms linear;
+  }
+
+  .hero__rot[data-anim='in'] .hero__rot-word {
+    transform: translateY(108%);
+    opacity: 0;
+  }
+
+  .hero__rot[data-anim='settle'] .hero__rot-word {
+    transform: translateY(0);
+    opacity: 1;
+    transition:
+      transform 300ms cubic-bezier(0.22, 0.61, 0.36, 1),
+      opacity 200ms linear;
+  }
+
+  .hero__sub {
+    margin-top: 16px;
+    max-width: 40ch;
+    font-size: var(--fs-hero-sub);
+    font-weight: 500;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    max-width: 420px;
+    margin-top: 22px;
+  }
+
+  /* Equal halves, so the pair reads as one control rather than two odd shapes.
+     The 140px basis is a floor, not a fixed width: the labels do not wrap, so
+     below roughly 360px the two of them cannot fit a row and stack instead of
+     pushing the hero wider than the viewport. */
+  .hero__actions .pill {
+    flex: 1 1 140px;
+    min-width: 0;
+    padding-inline: 12px;
+  }
+
+  @media (min-width: 30rem) {
+    .hero__actions .pill {
+      padding-inline: 22px;
+    }
+  }
+
+  @media (min-width: 48rem) {
+    .hero__frame {
+      min-height: min(76vh, 700px);
+      padding-block: 84px 0;
+    }
+
+  }
+</style>
+
+<script>
+  /**
+   * Headline rotator.
+   *
+   * Swaps the tail of the <h1> between real sourcing searches. The orange block
+   * is width-animated to a measured value so it resizes with the phrase instead
+   * of jumping.
+   *
+   * Accessibility:
+   *  - Disabled entirely under `prefers-reduced-motion`. The first phrase stays,
+   *    and the headline is a complete sentence either way.
+   *  - Pauses on hover and on keyboard focus inside the hero, and while the tab
+   *    is hidden, so it is never motion the reader cannot stop.
+   *  - `aria-live="off"`: assistive tech reads the heading once, as rendered. The
+   *    rotation is presentational, not new information.
+   */
+  const root = document.querySelector<HTMLElement>('[data-rotator]');
+  if (root && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const view = root.querySelector<HTMLElement>('.hero__rot-view');
+    const word = root.querySelector<HTMLElement>('.hero__rot-word');
+    let phrases: string[] = [];
+    try {
+      phrases = JSON.parse(root.dataset.rotator || '[]');
+    } catch {
+      phrases = [];
+    }
+
+    if (view && word && phrases.length > 1) {
+      root.setAttribute('aria-live', 'off');
+
+      // Offscreen twin, styled identically, used to measure the next phrase.
+      const ruler = document.createElement('span');
+      ruler.setAttribute('aria-hidden', 'true');
+      ruler.style.cssText =
+        'position:absolute;left:-9999px;top:0;white-space:nowrap;pointer-events:none';
+      root.appendChild(ruler);
+
+      const measure = (text: string) => {
+        const cs = getComputedStyle(word);
+        ruler.style.font = cs.font;
+        ruler.style.letterSpacing = cs.letterSpacing;
+        ruler.textContent = text;
+        return ruler.getBoundingClientRect().width;
+      };
+
+      /* The block is border-box and the mark carries horizontal padding, so a
+         width set to the raw text width clips the last glyph by exactly that
+         padding. Add it back, plus a pixel for subpixel rounding. */
+      const boxWidth = (text: string) => {
+        const cs = getComputedStyle(root);
+        const pad = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+        return measure(text) + pad + 1;
+      };
+
+      const wide = matchMedia('(min-width: 48rem)');
+
+      const lock = () => {
+        if (!wide.matches) {
+          root.style.width = '';
+          return;
+        }
+        root.style.width = `${boxWidth(word.textContent || '')}px`;
+      };
+      lock();
+      addEventListener('resize', lock, { passive: true });
+      wide.addEventListener('change', lock);
+      // The first measurement happens against the fallback face; Geist swaps in
+      // later and every glyph changes width. Without this the opening phrase is
+      // measured too narrow and gets clipped.
+      if (document.fonts?.ready) document.fonts.ready.then(lock).catch(() => {});
+
+      let i = 0;
+      let paused = false;
+      let timer = 0;
+
+      const step = () => {
+        clearTimeout(timer);
+        if (paused) {
+          timer = window.setTimeout(step, 600);
+          return;
+        }
+        const next = phrases[(i + 1) % phrases.length];
+
+        root.dataset.anim = 'out';
+        if (wide.matches) root.style.width = `${boxWidth(next)}px`;
+        else root.style.width = '';
+
+        window.setTimeout(() => {
+          word.textContent = next;
+          i = (i + 1) % phrases.length;
+
+          // Commit the start position, then release the transition. This has to
+          // be a forced reflow rather than a rAF pair: rAF is throttled in a
+          // background or unfocused tab, and the timers driving this loop are
+          // not — so a rAF-gated settle can silently never arrive and leave the
+          // word parked off-screen.
+          root.dataset.anim = 'in';
+          void word.offsetHeight;
+          root.dataset.anim = 'settle';
+
+          timer = window.setTimeout(step, 3200);
+        }, 210);
+      };
+
+      timer = window.setTimeout(step, 3200);
+
+      const hero = root.closest('.hero');
+      const hold = (state: boolean) => () => {
+        paused = state;
+      };
+      hero?.addEventListener('pointerenter', hold(true));
+      hero?.addEventListener('pointerleave', hold(false));
+      hero?.addEventListener('focusin', hold(true));
+      hero?.addEventListener('focusout', hold(false));
+      document.addEventListener('visibilitychange', () => {
+        paused = document.hidden;
+      });
+    }
+  }
+</script>

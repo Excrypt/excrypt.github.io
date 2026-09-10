@@ -1,0 +1,299 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { site, absoluteUrl } from '../../data/site';
+import {
+  articleSchema,
+  faqSchema,
+  breadcrumbSchema,
+  organizationSchema,
+  webSiteSchema,
+  personSchema,
+  type SchemaNode,
+} from '../../lib/schema';
+
+export async function getStaticPaths() {
+  const answers = await getCollection('answers', ({ data }) => !data.draft);
+  return answers.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+interface Props {
+  entry: CollectionEntry<'answers'>;
+}
+
+const { entry } = Astro.props;
+const { data } = entry;
+const { Content } = await render(entry);
+
+const path = `/answers/${entry.id}/`;
+const url = absoluteUrl(path);
+
+// `related` holds validated collection references, so every id resolves.
+const all = await getCollection('answers', ({ data: d }) => !d.draft);
+const related = data.related
+  .map((ref) => all.find((candidate) => candidate.id === ref.id))
+  .filter((x): x is CollectionEntry<'answers'> => Boolean(x));
+
+const fmt = (d: Date) =>
+  d.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+
+/** ISO calendar date, for the <time datetime> attribute. */
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+
+const author = site.founders.find((f) => f.name === data.author) ?? site.founders[0];
+
+const schemas: SchemaNode[] = [
+  organizationSchema(),
+  webSiteSchema(),
+  personSchema(author),
+  breadcrumbSchema([
+    { name: 'Home', url: absoluteUrl('/') },
+    { name: 'Answers', url: absoluteUrl('/answers/') },
+    { name: data.title, url },
+  ]),
+];
+
+if (data.schemaType === 'FAQPage') {
+  schemas.push(faqSchema(data.faq, url));
+} else {
+  schemas.push(
+    articleSchema({
+      headline: data.title,
+      description: data.description,
+      url,
+      datePublished: data.publishDate.toISOString(),
+      dateModified: (data.updatedDate ?? data.publishDate).toISOString(),
+      authorName: data.author,
+    })
+  );
+}
+---
+
+<BaseLayout
+  title={data.title}
+  description={data.description}
+  path={path}
+  ogType="article"
+  schemas={schemas}
+>
+  <article class="section">
+    <div class="container answer">
+      <header class="answer__head">
+        <nav class="answer__crumb" aria-label="Breadcrumb">
+          <a class="label" href="/answers/">Answers</a>
+        </nav>
+
+        <h1 class="answer__title">{data.title}</h1>
+
+        <p class="lead answer__direct">{data.answer}</p>
+
+        <p class="small muted answer__byline">
+          Written by {author.name}, {author.role.toLowerCase()} of {site.name}. Published <time datetime={iso(data.publishDate)}>{fmt(data.publishDate)}</time>{data.updatedDate && <>, updated <time datetime={iso(data.updatedDate)}>{fmt(data.updatedDate)}</time></>}.
+        </p>
+      </header>
+
+      <div class="answer__body">
+        <Content />
+      </div>
+
+      {
+        data.faq.length > 0 && (
+          <section class="answer__block" aria-labelledby="answer-faq-heading">
+            <h2 id="answer-faq-heading" class="answer__block-heading">
+              Common follow-ups
+            </h2>
+            <div class="answer__faq-list">
+              {data.faq.map((item) => (
+                <details class="answer__faq-item">
+                  <summary>{item.question}</summary>
+                  <p class="muted">{item.answer}</p>
+                </details>
+              ))}
+            </div>
+          </section>
+        )
+      }
+
+      {
+        data.sources.length > 0 && (
+          <section class="answer__block" aria-labelledby="answer-sources-heading">
+            <h2 id="answer-sources-heading" class="answer__block-heading">
+              Sources
+            </h2>
+            <ul class="answer__list">
+              {data.sources.map((source) => (
+                <li>
+                  <a href={source.url} rel="noopener">
+                    {source.label}
+                  </a>
+                  {source.note && <span class="muted"> — {source.note}</span>}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+
+      <nav class="answer__block" aria-label="More answers">
+        {
+          related.length > 0 && (
+            <>
+              <h2 class="answer__block-heading">Read next</h2>
+              <ul class="answer__list">
+                {related.map((item) => (
+                  <li>
+                    <a href={`/answers/${item.id}/`}>{item.data.title}</a>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )
+        }
+
+        <div class="answer__home">
+          <p class="lead answer__home-line">
+            {site.offer.priceDisplay} a month, month to month, and you own everything we
+            build.
+          </p>
+          <div class="answer__home-actions">
+            <a class="pill pill--primary" href="/contact/">
+              Talk to us<span class="pill__chev" aria-hidden="true" />
+            </a>
+            <a class="pill pill--quiet" href="/">What {site.name} does</a>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .answer {
+    max-width: 760px;
+  }
+
+  .answer__head > * + * {
+    margin-top: 20px;
+  }
+
+  .answer__crumb a {
+    text-decoration: none;
+  }
+
+  .answer__crumb a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+  }
+
+  .answer__title {
+    max-width: 20ch;
+  }
+
+  /* The direct answer, before any elaboration. Set apart because this is the
+     sentence most likely to be lifted out of the page on its own. */
+  .answer__direct {
+    max-width: 66ch;
+    padding: 16px 20px;
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--r-md) var(--r-md) 0;
+    background: var(--accent-tint);
+  }
+
+  .answer__byline {
+    color: var(--grey-600);
+  }
+
+  .answer__body {
+    margin-top: 48px;
+  }
+
+  .answer__body :global(h2) {
+    margin-top: 52px;
+    font-size: 1.5rem;
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    max-width: 26ch;
+  }
+
+  .answer__body :global(p),
+  .answer__body :global(ul) {
+    margin-top: 18px;
+    max-width: 68ch;
+    color: var(--grey-800);
+  }
+
+  .answer__body :global(ul) {
+    padding-left: 20px;
+  }
+
+  .answer__body :global(li + li) {
+    margin-top: 8px;
+  }
+
+  .answer__block {
+    margin-top: 56px;
+    padding-top: 40px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .answer__block-heading {
+    font-size: var(--fs-h3);
+  }
+
+  .answer__faq-list {
+    margin-top: 20px;
+    border: 1px solid var(--rule);
+    border-radius: var(--r-lg);
+    overflow: clip;
+  }
+
+  .answer__faq-item {
+    border-top: 1px solid var(--rule);
+  }
+
+  .answer__faq-item:first-child {
+    border-top: 0;
+  }
+
+  .answer__faq-item summary {
+    padding: 16px 20px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .answer__faq-item summary:hover {
+    background: var(--grey-50);
+  }
+
+  .answer__faq-item p {
+    padding: 0 20px 18px;
+  }
+
+  .answer__list {
+    margin: 16px 0 0;
+    padding-left: 20px;
+  }
+
+  .answer__list li {
+    margin-top: 10px;
+    max-width: 72ch;
+    color: var(--grey-700);
+  }
+
+  .answer__home-line {
+    max-width: 48ch;
+  }
+
+  .answer__home-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 22px;
+  }
+</style>

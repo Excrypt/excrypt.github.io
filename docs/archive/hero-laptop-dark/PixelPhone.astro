@@ -1,0 +1,253 @@
+---
+/**
+ * A phone held in the hero, showing a dark-mode chat assistant answering the
+ * query in the headline.
+ *
+ * The device frame is drawn in CSS — real proportions, rounded shell, thin
+ * bezel, dynamic island — and deliberately *not* pixelated, so the realistic
+ * object reads against the pixel landscape behind it. Everything on the screen
+ * stays in the pixel idiom: monospace, square corners, hard rules.
+ *
+ * It carries no product name, wordmark or logo of any assistant.
+ *
+ * NOTE ON THE PHOTOGRAPH: this is the device only. If a real photo of a hand
+ * holding a phone is supplied, `.phone__hand` is the slot it goes in — see
+ * docs/before-launch.md for what the shot needs to be.
+ *
+ * The markup renders the FIRST query fully resolved, so with JavaScript off or
+ * under `prefers-reduced-motion` the screen still reads correctly.
+ */
+interface Props {
+  ask: string;
+  results: string[];
+}
+const { ask, results } = Astro.props;
+---
+
+<div
+  class="phone"
+  role="img"
+  aria-label="A phone showing an AI assistant answering a buyer's sourcing question by naming three shops"
+>
+  <div class="phone__body">
+    <div class="phone__screen">
+      <div class="phone__island" aria-hidden="true"></div>
+
+      <div class="lt__screen">
+        <div class="lt__turn lt__turn--user">
+          <p class="lt__bubble"><span class="lt__ask" data-lt-ask>{ask}</span></p>
+        </div>
+
+        <div class="lt__turn lt__turn--bot">
+          <span class="lt__avatar" aria-hidden="true"></span>
+          <div class="lt__reply">
+            <p class="lt__lede">Three shops can take that:</p>
+            <ul class="lt__results" data-lt-results>
+              {
+                results.map((name, i) => (
+                  <li class="lt__row" data-lt-row>
+                    <span class="lt__n">{i + 1}</span>
+                    <span class="lt__name">{name}</span>
+                  </li>
+                ))
+              }
+            </ul>
+            <p class="lt__caret" aria-hidden="true"><span></span></p>
+          </div>
+        </div>
+
+        <div class="lt__composer" aria-hidden="true">
+          <span class="lt__placeholder">Ask a question</span>
+          <span class="lt__send"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .phone {
+    width: 100%;
+    max-width: 232px;
+    margin-inline: auto;
+  }
+
+  /* Real device proportions and a rounded shell. The one thing on the page that
+     is not hard-edged, on purpose: a phone is a rounded object, and the contrast
+     with the pixel landscape is what makes it read as a real thing sitting in an
+     illustrated scene. */
+  .phone__body {
+    position: relative;
+    padding: 7px;
+    border-radius: 34px;
+    background: linear-gradient(160deg, #3a3a3c 0%, #0b0b0c 42%, #2b2b2d 100%);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.55),
+      0 18px 34px -18px rgba(0, 0, 0, 0.6);
+  }
+
+  .phone__screen {
+    position: relative;
+    border-radius: 27px;
+    background: var(--grey-950);
+    overflow: hidden;
+    aspect-ratio: 9 / 19;
+  }
+
+  .phone__island {
+    position: absolute;
+    top: 7px;
+    left: 50%;
+    width: 54px;
+    height: 15px;
+    border-radius: 999px;
+    background: #000;
+    transform: translateX(-50%);
+    z-index: 2;
+  }
+
+  /* --- the screen contents, in the pixel idiom --- */
+
+  .lt__screen {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: 100%;
+    padding: 30px 8px 0;
+    color: var(--grey-100);
+    font-family: var(--font-mono);
+    font-size: 8px;
+    line-height: 1.5;
+    text-align: left;
+  }
+
+  .lt__turn--user {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .lt__bubble {
+    max-width: 88%;
+    padding: 5px 7px;
+    background: var(--grey-800);
+    color: var(--grey-100);
+  }
+
+  .lt__turn--bot {
+    display: grid;
+    grid-template-columns: 12px minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .lt__avatar {
+    width: 10px;
+    height: 10px;
+    margin-top: 1px;
+    background:
+      linear-gradient(var(--c-lime) 0 0) 0 0 / 4px 4px no-repeat,
+      linear-gradient(var(--grey-600) 0 0) 6px 0 / 4px 4px no-repeat,
+      linear-gradient(var(--grey-600) 0 0) 0 6px / 4px 4px no-repeat,
+      linear-gradient(var(--accent) 0 0) 6px 6px / 4px 4px no-repeat;
+  }
+
+  .lt__lede {
+    color: var(--grey-400);
+  }
+
+  .lt__results {
+    display: grid;
+    gap: 2px;
+    margin: 5px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .lt__row {
+    display: grid;
+    grid-template-columns: 9px minmax(0, 1fr);
+    align-items: baseline;
+  }
+
+  .lt__n {
+    color: var(--accent);
+  }
+
+  /* Typed lines: monospace plus steps() sized to the exact character count. */
+  .lt__ask,
+  .lt__name {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .lt__name {
+    color: var(--grey-100);
+  }
+
+  .lt__caret {
+    height: 8px;
+    margin-top: 4px;
+  }
+
+  .lt__caret span {
+    display: inline-block;
+    width: 5px;
+    height: 8px;
+    background: var(--c-lime);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .lt__caret span {
+      animation: ltBlink 1s steps(1, end) infinite;
+    }
+  }
+
+  @keyframes ltBlink {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    50.01%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .lt__composer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
+    margin-bottom: 10px;
+    padding: 6px 7px;
+    border: 2px solid var(--grey-700);
+    background: var(--grey-900);
+  }
+
+  .lt__placeholder {
+    color: var(--grey-600);
+  }
+
+  .lt__send {
+    width: 10px;
+    height: 10px;
+    background: var(--accent);
+  }
+
+  @media (min-width: 48rem) {
+    .phone {
+      max-width: 268px;
+    }
+
+    .lt__screen {
+      font-size: 9px;
+      gap: 12px;
+      padding: 34px 10px 0;
+    }
+
+    .lt__row {
+      grid-template-columns: 11px minmax(0, 1fr);
+    }
+  }
+</style>

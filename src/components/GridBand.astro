@@ -1,0 +1,250 @@
+---
+/**
+ * The ruled band the reference runs above and below its feature sections: a row
+ * of square cells with a few filled in flat colour.
+ *
+ * SQUARE, AND EXACTLY RAIL TO RAIL.
+ * The band is inset by the same expression `.rails` uses for its vertical lines,
+ * so its edges land on them rather than running past into the gutter. Inside it
+ * is a plain `repeat(var(--cols), 1fr)` grid whose cells carry `aspect-ratio: 1`
+ * — so the cells are square by construction, they divide the rail-to-rail width
+ * evenly by construction, and the band's height is whatever one cell comes to.
+ * Nothing is measured and nothing needs re-tuning when the container changes.
+ *
+ * An earlier pass positioned everything with `calc(50% + n * cell)` off a fixed
+ * cell size. That could not satisfy either half of this: the cells were not
+ * square, and the pattern ran the full viewport width with no relationship to
+ * the rails.
+ *
+ * COLUMN COUNTS change per breakpoint, so cells stay a sensible size rather than
+ * turning into 28px slivers on a phone or 160px slabs on a desktop. That means a
+ * block's column index means something different at each width, so each block
+ * carries one per breakpoint. Seven blocks on the page — explicit is cheaper
+ * here than clever.
+ *
+ * Purely decorative: `aria-hidden`, no text.
+ *
+ * Use it sparingly. An earlier pass put grid motifs behind several sections at
+ * once and the page read as busy — this should feel like registration marks on a
+ * press sheet, not like wallpaper.
+ *
+ * The strips used to drift sideways on scroll. That is archived, not deleted —
+ * see docs/archive/grid-band-drift/, which has the exact CSS, the markup change
+ * and the one edge-column problem to fix before it goes back.
+ */
+import DitherCanvas from './DitherCanvas.astro';
+
+export interface Block {
+  /** 1-based start column, per breakpoint. */
+  m: number;
+  t: number;
+  d: number;
+  /** Width in cells. Defaults to 1 at every breakpoint. */
+  spanM?: number;
+  spanT?: number;
+  spanD?: number;
+  tone: 'navy' | 'lime' | 'accent' | 'sky' | 'ink';
+  /** Which rule of the band it sits against. */
+  edge?: 'top' | 'bottom';
+}
+
+interface Props {
+  blocks?: Block[];
+  class?: string;
+}
+
+const { blocks = [], class: className = '' } = Astro.props;
+
+const COLS = { m: 6, t: 10, d: 14 };
+
+/**
+ * A different seed per block, so two blocks of the same colour on one page do
+ * not draw the identical pattern. Derived from the block rather than random, so
+ * the markup is stable between builds.
+ */
+const seedFor = (b: Block, i: number) => b.d * 131 + b.m * 17 + i * 7 + 3;
+
+/** Clamp so a hand-written column can never fall off its own grid. */
+const at = (col: number, span: number, cols: number) => {
+  const start = Math.min(Math.max(1, col), cols);
+  return { start, span: Math.min(span, cols - start + 1) };
+};
+---
+
+<div class:list={['band', className]} aria-hidden="true">
+  <div class="band__grid">
+    {Array.from({ length: COLS.d }).map(() => <span class="band__cell" />)}
+  </div>
+
+  <div class="band__blocks">
+    {
+    blocks.map((b, i) => {
+      const m = at(b.m, b.spanM ?? 1, COLS.m);
+      const t = at(b.t, b.spanT ?? 1, COLS.t);
+      const d = at(b.d, b.spanD ?? 1, COLS.d);
+      return (
+        <span
+          class="band__block"
+          data-tone={b.tone}
+          data-edge={b.edge || 'top'}
+          style={`--m:${m.start};--ms:${m.span};--t:${t.start};--ts:${t.span};--d:${d.start};--ds:${d.span}`}
+        >
+          <DitherCanvas
+            variant="field"
+            tone={b.tone}
+            cell={3}
+            seed={seedFor(b, i)}
+          />
+        </span>
+      );
+    })
+    }
+  </div>
+</div>
+
+<style>
+  .band {
+    --cols: 6;
+    --blk-h: 16px;
+
+    position: relative;
+    /* The same expression `.rails` uses, so the band's edges land on the rails
+       instead of running past them into the gutter. */
+    margin-inline: calc(
+      max(var(--gutter), calc(50% - var(--container) / 2)) - var(--rail-inset)
+    );
+    border: 1px solid var(--rule);
+  }
+
+  /**
+   * Two layers, not one grid.
+   *
+   * With cells and blocks as items of the same grid, the explicitly-placed
+   * blocks reserved their slots and the auto-placed cells were pushed past them
+   * into IMPLICIT columns — six cells and two blocks produced a nine-track
+   * template with three tracks 0.67px wide, and the blocks rendered as
+   * hairlines. Overlaying two grids that share `--cols` lets a block sit on top
+   * of a cell instead of displacing it.
+   */
+  .band__grid,
+  .band__blocks {
+    display: grid;
+    grid-template-columns: repeat(var(--cols), 1fr);
+  }
+
+  .band__blocks {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* The row's height is the cell's, which is the band's height. This is what
+     makes the cells square without anyone choosing a height. */
+  .band__cell {
+    aspect-ratio: 1;
+    border-right: 1px solid var(--rule);
+  }
+
+  /* `nth-child`, not `nth-of-type`: the blocks are spans too, so `of-type`
+     counts them in the same sequence and `:last-of-type` matches a block rather
+     than the last cell. Cells are always children 1..14; blocks follow. */
+  .band__cell:nth-child(6) {
+    border-right: 0;
+  }
+
+  /* Cells past the breakpoint's column count are not rendered at all, so their
+     borders cannot show up in the wrong place. */
+  .band__cell:nth-child(n + 7) {
+    display: none;
+  }
+
+  /* `position: relative` and `overflow: hidden` so the dither canvas inside can
+     sit on `inset: 0` and be clipped to the strip. The flat colour stays as the
+     ground: if the script never runs, the block is the solid block it was. */
+  .band__block {
+    position: relative;
+    grid-row: 1;
+    grid-column: var(--m) / span var(--ms);
+    min-width: 0;
+    height: var(--blk-h);
+    background: var(--blk-ink);
+    overflow: hidden;
+  }
+
+  .band__block[data-edge='top'] {
+    align-self: start;
+  }
+
+  .band__block[data-edge='bottom'] {
+    align-self: end;
+  }
+
+  .band__block[data-tone='navy'] {
+    --blk-ink: var(--c-navy);
+  }
+
+  .band__block[data-tone='lime'] {
+    --blk-ink: var(--c-lime);
+  }
+
+  .band__block[data-tone='accent'] {
+    --blk-ink: var(--accent);
+  }
+
+  .band__block[data-tone='sky'] {
+    --blk-ink: var(--c-sky);
+  }
+
+  .band__block[data-tone='ink'] {
+    --blk-ink: var(--grey-950);
+  }
+
+  @media (min-width: 48rem) {
+    .band {
+      --cols: 10;
+      --blk-h: 20px;
+    }
+
+    .band__cell:nth-child(n + 7) {
+      display: block;
+    }
+
+    .band__cell:nth-child(6) {
+      border-right: 1px solid var(--rule);
+    }
+
+    .band__cell:nth-child(10) {
+      border-right: 0;
+    }
+
+    .band__cell:nth-child(n + 11) {
+      display: none;
+    }
+
+    .band__block {
+      grid-column: var(--t) / span var(--ts);
+    }
+  }
+
+  @media (min-width: 62.5em) {
+    .band {
+      --cols: 14;
+      --blk-h: 24px;
+    }
+
+    .band__cell:nth-child(n + 11) {
+      display: block;
+    }
+
+    .band__cell:nth-child(10) {
+      border-right: 1px solid var(--rule);
+    }
+
+    .band__cell:nth-child(14) {
+      border-right: 0;
+    }
+
+    .band__block {
+      grid-column: var(--d) / span var(--ds);
+    }
+  }
+</style>

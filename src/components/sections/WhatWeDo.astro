@@ -1,0 +1,122 @@
+---
+const items = [
+  {
+    label: 'Answers',
+    title: 'Answer the questions buyers type',
+    body:
+      'We write pages that answer real sourcing questions in the words buyers use — ' +
+      'minimums, turnaround, what you will and will not take on. Those pages are what ' +
+      'a model reads when someone goes looking for what you sell.',
+    tone: '',
+  },
+  {
+    label: 'Structure',
+    title: 'Make the shop legible to a machine',
+    body:
+      'Methods, run sizes, minimums and in-hands turnaround stated plainly and marked ' +
+      'up in structured data — or, if you distribute, what you source and how fast you ' +
+      'quote. An assistant should not have to infer any of it from a gallery page.',
+    tone: 'halftone--sky',
+  },
+  {
+    label: 'Consistency',
+    title: 'Keep the record straight everywhere',
+    body:
+      'Your site, your Google Business Profile and the industry directories say the ' +
+      'same thing about address, hours and what you handle. Contradictions are a ' +
+      'common reason a supplier gets left out of an answer.',
+    tone: 'halftone--green',
+  },
+];
+---
+
+<section class="section" id="what-we-do">
+  <div class="container">
+    <div class="section-head">
+      <h2>Three jobs, <span class="hi">every month</span></h2>
+      <p class="lead">
+        No dashboards, no retainer theatre. These are the things that decide whether you
+        turn up in an answer.
+      </p>
+    </div>
+
+    <div class="bento">
+      {
+        items.map((item, i) => (
+          <article class="bento__card" style={`--i:${i}`}>
+            <div class:list={['halftone', item.tone]} aria-hidden="true" />
+            <div class="bento__body">
+              <h3>{item.title}</h3>
+              <p class="muted">{item.body}</p>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .bento {
+    display: grid;
+    gap: 16px;
+  }
+
+  .bento__card {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    border: 1px solid var(--rule);
+    border-radius: var(--r-xl);
+    background: var(--white);
+  }
+
+  .bento__body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 22px 14px 16px;
+  }
+
+  .bento__body h3 {
+    font-size: var(--fs-card);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+  }
+
+  /**
+   * Mobile only: the cards stack. Each one sticks below the header and the next
+   * scrolls up over it, leaving a sliver of the one beneath.
+   *
+   * This is `position: sticky`, not an animation — no script, no scroll
+   * listener, and it costs nothing per frame. Three things it depends on:
+   *
+   *  - The cards are opaque. They already carry `background: var(--white)` and a
+   *    border, so a card genuinely covers the one under it rather than letting
+   *    it show through.
+   *  - Nothing in the ancestor chain scrolls. `html` uses `overflow-x: clip`
+   *    rather than `hidden` — `clip` does not create a scroll container, so
+   *    sticky still resolves against the viewport. If that ever becomes
+   *    `hidden`, this silently stops working.
+   *  - Later cards paint over earlier ones. They are all positioned and carry no
+   *    `z-index`, so DOM order settles it; the header's `z-index: 30` keeps the
+   *    stack passing underneath it.
+   *
+   * `top` steps by 14px per card so each one parks just below the last and the
+   * stack reads as a deck rather than as one card replacing another.
+   */
+  @media (max-width: 47.999rem) {
+    .bento__card {
+      position: sticky;
+      /* Clears the 72px sticky header, then one step per card. */
+      top: calc(84px + var(--i) * 14px);
+    }
+  }
+
+  @media (min-width: 48rem) {
+    .bento {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+  }
+</style>

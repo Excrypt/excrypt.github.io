@@ -1,0 +1,214 @@
+---
+/**
+ * The before/now comparison: a label over each column, then a filled panel
+ * holding short chips — crosses on the left, ticks on the right.
+ *
+ * The reference fills its panels with a vertical scan-line gradient. Ours run
+ * the hero's own dither canvas in its `field` variant: a drifting pixel field,
+ * grey on the left and periwinkle on the right. It parks itself when the section is off
+ * screen and never starts under `prefers-reduced-motion`, where each panel is
+ * the painted ground colour instead.
+ *
+ * The panels are square-cornered, like the assistant strip's cells and unlike
+ * the site's cards. That is the reference's construction and it is what makes
+ * the two blocks read as printed panels rather than as more cards.
+ *
+ * CONTRAST. The field moves, so the chips cannot be a light wash over it —
+ * text contrast would breathe with the picture. Each chip carries an opaque
+ * enough scrim that the worst frame of the field still clears AA: white on the
+ * dark panel, near-black on the sky one.
+ */
+import DitherCanvas from '../DitherCanvas.astro';
+const rows: { before: string; now: string }[] = [
+  {
+    before: 'Called a distributor rep he had worked with before.',
+    now: 'Asks ChatGPT for three shops that can hit his in-hands date.',
+  },
+  {
+    before: 'Searched "screen printing near me" and opened five tabs.',
+    now: 'Reads the answer. Never opens a results page.',
+  },
+  {
+    before: 'Called around for minimums, turnaround and a price.',
+    now: 'Gets minimums and turnaround summarised before he calls anyone.',
+  },
+  {
+    before: 'Asked a Facebook group who can run 300 hoodies by Friday.',
+    now: 'Asks a follow-up: "which of those does DTF under 24 pieces?"',
+  },
+  {
+    before: 'Found you because you were on page one.',
+    now: 'Finds you only if the model has something to read about you.',
+  },
+];
+---
+
+<section class="section" id="the-shift">
+  <div class="container">
+    <div class="section-head">
+      <h2>How a buyer <span class="hi">finds a shop</span></h2>
+      <p class="lead">
+        The path changed in about two years. Most shops are still standing on the old one.
+      </p>
+    </div>
+
+    <div class="shift">
+      <div class="shift__col">
+        <p class="shift__eyebrow"><span class="label">Before</span></p>
+
+        <div class="shift__panel shift__panel--before on-dark">
+          <DitherCanvas variant="field" tone="grey" seed={41} />
+          <ul class="shift__grid">
+            {
+              rows.map((row) => (
+                <li class="shift__chip">
+                  <svg class="shift__ico" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M4 4l8 8M12 4l-8 8" />
+                  </svg>
+                  <span>{row.before}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+
+      <div class="shift__col">
+        <p class="shift__eyebrow"><span class="label">Now</span></p>
+
+        <div class="shift__panel shift__panel--now">
+          <DitherCanvas variant="field" tone="periwinkle" seed={87} />
+          <ul class="shift__grid">
+            {
+              rows.map((row) => (
+                <li class="shift__chip">
+                  <svg class="shift__ico" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M3.5 8.5l3 3 6-7" />
+                  </svg>
+                  <span>{row.now}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .shift {
+    display: grid;
+    gap: 40px;
+  }
+
+  .shift__eyebrow {
+    display: flex;
+    align-items: center;
+  }
+
+  .shift__panel {
+    position: relative;
+    margin-top: 12px;
+    padding: 28px 16px;
+    overflow: hidden;
+  }
+
+  .shift__panel--before {
+    color: var(--white);
+  }
+
+  .shift__panel--now {
+    color: var(--grey-950);
+    /* The sky field is light, so the panel needs an edge against the page. */
+    box-shadow: inset 0 0 0 1px var(--rule);
+  }
+
+  .shift__grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    align-content: center;
+    gap: 4px;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .shift__chip {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+    padding: 14px 16px;
+    background: var(--chip-ground);
+    line-height: 1.4;
+  }
+
+  /* Opaque enough that the drifting field underneath cannot move the text's
+     contrast. A 12% wash was fine over a static ground and is not over this. */
+  .shift__panel--before .shift__chip {
+    --chip-ground: color-mix(in srgb, var(--grey-950) 74%, transparent);
+  }
+
+  .shift__panel--now .shift__chip {
+    --chip-ground: color-mix(in srgb, var(--white) 82%, transparent);
+  }
+
+  .shift__ico {
+    width: 16px;
+    height: 16px;
+    margin-top: 0.1em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .shift__panel--before .shift__ico {
+    color: var(--grey-400);
+  }
+
+  /* The one accent moment left in the block, now the panel itself is sky —
+     but walked down in value. Straight `--accent` measured 3.03:1 against the
+     darkest frame of the field, which clears 1.4.11 by 0.03 and would not
+     survive a nudge to the ramp. Same reasoning as `.label--accent`. */
+  .shift__panel--now .shift__ico {
+    color: color-mix(in srgb, var(--black) 26%, var(--accent));
+  }
+
+  @media (min-width: 48rem) {
+    .shift {
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    /* Grid stretches the columns to match, but the panel inside each one has to
+       be told to take the slack — otherwise the taller side's copy makes one
+       panel deeper than the other and the pair stops reading as a comparison. */
+    .shift__col {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .shift__panel {
+      flex: 1;
+    }
+
+    .shift__panel {
+      padding: 40px 22px;
+    }
+
+    /* The reference runs a 2x2. We have five rows and will not drop one to make
+       the shape tidy, so the last spans the pair. */
+    .shift__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .shift__chip:last-child {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

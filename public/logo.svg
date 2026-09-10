@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 64" role="img" aria-label="BriteUX" shape-rendering="crispEdges">
+  <rect width="260" height="64" fill="#ffffff"/>
+  <rect x="8" y="15" width="34" height="34" fill="#ff5e19"/>
+  <rect x="17.0" y="21.5" width="12.8" height="3.2" fill="#ffffff"/>
+  <rect x="17.0" y="24.7" width="3.2" height="3.2" fill="#ffffff"/>
+  <rect x="29.8" y="24.7" width="3.2" height="3.2" fill="#ffffff"/>
+  <rect x="17.0" y="27.9" width="3.2" height="3.2" fill="#ffffff"/>
+  <rect x="29.8" y="27.9" width="3.2" height="3.2" fill="#ffffff"/>
+  <rect x="17.0" y="31.1" width="12.8" height="3.2" fill="#ffffff"/>
+  <rect x="17.0" y="34.3" width="3.2" height="3.2" fill="#ffffff"/>
+  <rect x="29.8" y="34.3" width="3.2" height="3.2" fill="#ffffff"/>
+  <rect x="17.0" y="37.5" width="3.2" height="3.2" fill="#ffffff"/>
+  <rect x="29.8" y="37.5" width="3.2" height="3.2" fill="#ffffff"/>
+  <rect x="17.0" y="40.7" width="12.8" height="3.2" fill="#ffffff"/>
+  <text x="54" y="43" font-family="Geist, Helvetica Neue, Arial, sans-serif"
+        font-size="27" font-weight="500" letter-spacing="-0.95" fill="#000000">BriteUX</text>
+</svg>

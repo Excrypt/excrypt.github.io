@@ -1,0 +1,61 @@
+---
+/**
+ * A placeholder for a photograph that does not exist yet.
+ *
+ * It is drawn as a halftone field — the same pixel language as the hero — with
+ * the description of the required photograph printed over it. `alt` is not
+ * filler: it names exactly what belongs in the slot, and it is the string that
+ * should become the real alt attribute when the photo is dropped in.
+ *
+ * To replace: swap for Astro's <Image /> with explicit width and height. The
+ * aspect-ratio here reserves the same box, so nothing shifts.
+ */
+interface Props {
+  alt: string;
+  /** CSS aspect-ratio value, e.g. "4 / 5". */
+  ratio?: string;
+  /** Ink for the halftone. */
+  tone?: '' | 'halftone--ink' | 'halftone--blue' | 'halftone--periwinkle' | 'halftone--gold';
+}
+const { alt, ratio = '16 / 10', tone = '' } = Astro.props;
+---
+
+<div
+  class:list={['slot', 'halftone', tone]}
+  style={`--halftone-ratio: ${ratio}`}
+  role="img"
+  aria-label={alt}
+>
+  <div class="slot__inner">
+    <span class="label slot__tag">Photograph</span>
+    <span class="slot__desc">{alt}</span>
+  </div>
+</div>
+
+<style>
+  .slot {
+    display: grid;
+  }
+
+  /* Sits above the halftone's own ::after density gradient. */
+  .slot__inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    align-self: end;
+  }
+
+  .slot__tag {
+    color: var(--grey-600);
+  }
+
+  .slot__desc {
+    font-size: var(--fs-small);
+    line-height: 1.35;
+    color: var(--grey-700);
+    text-wrap: pretty;
+  }
+</style>

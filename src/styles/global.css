@@ -1,0 +1,830 @@
+/* ==========================================================================
+   BriteUX — global system
+
+   The visual system is modelled on browserbase.com: a pale near-white ground,
+   a full-bleed dithered pixel hero, hot accent highlight blocks set behind
+   headline text, fully-rounded pills, hairline cell grids, and small
+   letterspaced mono labels. Values below were read off the live site and then
+   fitted to our own content.
+
+   Structure:
+     1. Tokens
+     2. Fonts
+     3. Reset
+     4. Typography
+     5. Layout + the vertical rails
+     6. Pills
+     7. Cells, panels, grid motif
+     8. Mono labels + highlight blocks
+     9. Forms
+    10. Accessibility + motion
+   ========================================================================== */
+
+/* 1. Tokens ------------------------------------------------------------- */
+
+:root {
+  /* Greys — the browserbase ramp, used as-is. It is a very even ramp and the
+     whole layout depends on grey-200 hairlines against grey-50 fills. */
+  --white: #ffffff;
+  --black: #000000;
+  --grey-25: #fcfcfc;
+  --grey-50: #f8f8f8;
+  --grey-100: #f2f2f2;
+  --grey-200: #e5e5e5;
+  --grey-300: #d4d4d4;
+  --grey-400: #a9a9a9;
+  --grey-500: #7d7d7d;
+  --grey-600: #5f5f5f;
+  --grey-700: #444444;
+  --grey-800: #2c2c2c;
+  --grey-900: #1a1a1a;
+  --grey-950: #0f0f0f;
+
+  /* The reference's accent set, verbatim. Which text a given accent can carry is
+     not a matter of taste — it is measured, and it decides where each one is
+     allowed to appear:
+
+       carries white text at any size   blue 5.00, navy 11.16, blue-600 7.77
+       carries white text when large    orange 3.06, red 3.44, magenta 3.14
+       carries black text only          sky, green, lime, yellow, gold, pink,
+                                        periwinkle  (all 8:1+ against black)
+
+     So orange floods the big headline blocks, blue floods panels that carry
+     running white text, and the light accents appear as halftone ink or under
+     black text. Pills stay black and mono labels stay grey — which is what the
+     reference does too, and it is why using their orange exactly costs nothing. */
+  --accent: #ff4500; /* orange — the primary */
+  --accent-press: #ff4500; /* browserbase red */
+  --accent-tint: #fff1ea;
+
+  --c-orange: #ff5e19;
+  --c-red: #ff4500;
+  --c-blue: #5956ff;
+  --c-sky: #00b0ff; /* director blue */
+  --c-green: #00c851; /* stagehand green */
+  --c-yellow: #fffacd;
+  --c-lime: #c4d600;
+  --c-navy: #0000cd;
+  --c-gold: #cb9915;
+  --c-magenta: #ff00ff;
+  --c-pink: #ffc0cb;
+  --c-periwinkle: #c5d3e8;
+  --c-stone: #f8f7f4; /* their logo-cloud cell — warm off-white */
+
+  /* Pastel tints — the fills behind "Don't use the web. Scale it." and the stat
+     stack under it. All carry black text (13:1 or better); none carries white. */
+  --t-pink: #ffc0cb;
+  --t-magenta: #ffbaff;
+  --t-periwinkle: #e2e9f3;
+  --t-blue: #c4edff;
+  --t-cream: #fffde6;
+  --t-lemon: #fffacd;
+  --t-mint: #a4f9c6;
+  --t-lime: #e1eb80;
+
+  --blue-50: #f6f6ff;
+  --blue-100: #e0e0ff;
+  --blue-200: #c1c1ff;
+  --blue-300: #a3a2ff;
+  --blue-400: #7d7cff;
+  --blue-500: #5956ff;
+  --blue-600: #382bea;
+  --blue-700: #2623c1;
+  --blue-800: #181499;
+  --blue-900: #050085;
+
+  /* The hero ground behind the dither. */
+  --sky: var(--c-periwinkle);
+
+  --text: var(--black);
+  --text-muted: var(--grey-600);
+  --rule: var(--grey-200);
+  --surface: var(--white);
+  --surface-sunk: var(--grey-50);
+
+  /* Radius — their scale. Pills use --r-full. */
+  --r-xs: 0.25rem;
+  --r-sm: 0.375rem;
+  --r-md: 0.5rem;
+  --r-lg: 0.625rem;
+  --r-xl: 0.75rem;
+  --r-2xl: 1rem;
+  --r-full: 62.4375rem;
+
+  /* Layout */
+  --container: 1280px;
+  --gutter: 40px;
+  /* How far the vertical rails sit outside the content edge. The hero media
+     block aligns to the rails, so this is the one value that controls both. */
+  --rail-inset: 16px;
+  --space-section: 72px;
+
+  --font: 'Geist', ui-sans-serif, system-ui, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Type — headlines track tight and negative, small text tracks positive.
+     That split is most of the reference's voice. */
+  /* Measured off their site at 390px and at 1440px.
+       mobile   h1/h2 21px/500/-0.02em/1.15 · h3 16px/500/+0.015em
+                lead 20px/500 · hero sub 16px/500 · body 16px/400/+0.01em
+       desktop  h1 45px · h2 36-45px · body 16px
+     Their mobile headline is far smaller than a typical hero — 21px — and that
+     restraint is a large part of why the highlight block hugs the words instead
+     of filling the column. */
+  --fs-h1: clamp(1.375rem, 0.84rem + 2.19vw, 2.5rem); /* 22 → 45 */
+  --fs-h2: clamp(1.3125rem, 0.96rem + 1.43vw, 2.25rem); /*   21 → 36 */
+  /* Bento/feature card titles. Theirs run 24px on desktop — the same size does a
+     lot of the work of making the cards feel like theirs. */
+  --fs-card: clamp(1.125rem, 0.94rem + 0.76vw, 1.5rem); /*   18 → 24 */
+  --fs-h3: clamp(1rem, 0.905rem + 0.39vw, 1.8rem); /*       16 → 20 */
+  --fs-lead: clamp(1.125rem, 1.055rem + 0.29vw, 1.25rem); /* 18 → 20 */
+  --fs-hero-sub: clamp(1rem, 0.905rem + 0.39vw, 1.25rem); /* 16 → 20 */
+  --fs-body: 1rem;
+  --fs-small: 0.875rem; /* captions and bylines only, never card body */
+  --fs-mono: 0.875rem; /* theirs is 14px, not 13 */
+
+  color-scheme: light;
+  interpolate-size: allow-keywords;
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --gutter: 40px;
+    --rail-inset: 28px;
+    --space-section: 112px;
+  }
+}
+
+/* 2. Fonts ---------------------------------------------------------------
+   Geist and Geist Mono (Vercel, OFL). The reference uses GT Planar, Plain and
+   GT Standard Mono, which are licensed; Geist is the closest open equivalent —
+   same flat-sided grotesk construction, single-storey g, tight fit.
+   Two variable files, 52 KB total, both preloaded. */
+
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('/fonts/geist-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 400 500 600;
+  font-display: swap;
+  src: url('/fonts/geist-mono-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* 3. Reset --------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+  /* `clip`, not `hidden`: `hidden` on body turns body into its own scroll
+     container, which moves the viewport scroller off the document. */
+  overflow-x: clip;
+}
+
+body {
+  margin: 0;
+  background: var(--white);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+img,
+svg,
+picture,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+/* Every raster on this site is meant to be seen as pixels. */
+.pixelated {
+  image-rendering: pixelated;
+}
+
+/* 4. Typography ---------------------------------------------------------- */
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--fs-h1);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: var(--fs-h2);
+  line-height: 1.08;
+  letter-spacing: -0.014em;
+}
+
+h3 {
+  font-size: var(--fs-h3);
+  line-height: 1.2;
+  letter-spacing: 0.015em;
+}
+
+@media (min-width: 48rem) {
+  h1 {
+    line-height: 1.1;
+  }
+
+  h2 {
+    line-height: 1.05;
+  }
+}
+
+p {
+  margin: 0;
+}
+
+.lead {
+  font-size: var(--fs-lead);
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.small {
+  font-size: var(--fs-small);
+  line-height: 1.45;
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+.prose > * + * {
+  margin-top: 1em;
+}
+
+a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--grey-400);
+  transition: text-decoration-color 120ms ease;
+}
+
+a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* 5. Layout + rails ------------------------------------------------------
+   The reference runs two faint vertical rules down the full height of the page
+   at the content edges, and every section rule stops at them. It is the thing
+   that makes the page read as one continuous sheet rather than a stack of
+   bands, so it is worth the pseudo-elements. */
+
+.container {
+  width: 100%;
+  max-width: calc(var(--container) + var(--gutter) * 2);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.rails {
+  position: relative;
+}
+
+.rails::before,
+.rails::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--rule);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.rails::before {
+  left: calc(max(var(--gutter), calc(50% - var(--container) / 2)) - var(--rail-inset));
+}
+
+.rails::after {
+  right: calc(max(var(--gutter), calc(50% - var(--container) / 2)) - var(--rail-inset));
+}
+
+.section {
+  position: relative;
+  z-index: 1;
+  padding-block: var(--space-section);
+}
+
+.section + .section {
+  border-top: 1px solid var(--rule);
+}
+
+.section-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 36px;
+  text-align: left;
+}
+
+@media (min-width: 48rem) {
+  .section-head {
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 56px;
+    text-align: center;
+  }
+}
+
+.section-head h2 {
+  max-width: 20ch;
+}
+
+.section-head .lead {
+  max-width: 56ch;
+  color: var(--text-muted);
+}
+
+/* 6. Pills ---------------------------------------------------------------
+   Fully rounded, 44px, chevron on the primary. */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid transparent;
+  border-radius: var(--r-full);
+  font: inherit;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+}
+
+.pill--primary {
+  background: var(--black);
+  color: var(--white);
+}
+
+.pill--primary:hover {
+  background: var(--grey-800);
+}
+
+/* Light-accent chip: black text, because every light accent in the set is a
+   black-text ground. */
+.pill--chip {
+  background: var(--chip, var(--c-lime));
+  color: var(--black);
+}
+
+.pill--invert {
+  background: var(--white);
+  color: var(--black);
+}
+
+.pill--invert:hover {
+  background: var(--grey-200);
+}
+
+.pill--quiet {
+  background: var(--grey-100);
+  color: var(--black);
+}
+
+.pill--quiet:hover {
+  background: var(--grey-200);
+}
+
+.pill--ghost {
+  background: transparent;
+  border-color: var(--grey-300);
+  color: var(--black);
+}
+
+.pill--ghost:hover {
+  border-color: var(--black);
+}
+
+.pill--lg {
+  min-height: 52px;
+  padding: 0 26px;
+}
+
+/* The chevron. Drawn, not an icon font, and it does not sit inside the label —
+   it is a separate element so the label still reads as a plain verb phrase. */
+.pill__chev {
+  width: 6px;
+  height: 6px;
+  border-top: 1.5px solid currentColor;
+  border-right: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  opacity: 0.9;
+}
+
+/* 7. Cells, panels, grid motif ------------------------------------------- */
+
+.cells {
+  display: grid;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  overflow: clip;
+}
+
+.cell {
+  padding: 24px;
+  border-top: 1px solid var(--rule);
+}
+
+.cells > .cell:first-child {
+  border-top: 0;
+}
+
+@media (min-width: 48rem) {
+  .cell {
+    padding: 28px;
+  }
+
+  .cells-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cells-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .cells-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .cells-2 > .cell:nth-child(-n + 2),
+  .cells-3 > .cell:nth-child(-n + 3),
+  .cells-4 > .cell:nth-child(-n + 4) {
+    border-top: 0;
+  }
+
+  .cells-2 > .cell:nth-child(2n),
+  .cells-3 > .cell:not(:nth-child(3n + 1)),
+  .cells-4 > .cell:not(:nth-child(4n + 1)) {
+    border-left: 1px solid var(--rule);
+  }
+}
+
+.panel {
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
+  background: var(--surface-sunk);
+}
+
+/* A printed halftone field. The reference fills its card media areas with product
+   UI screenshots; we have no product UI, so the equivalent here is the same pixel
+   language as the hero, drawn in CSS at zero cost. */
+.halftone {
+  --halftone-ink: var(--accent);
+  position: relative;
+  aspect-ratio: var(--halftone-ratio, 16 / 9);
+  border-radius: var(--r-md);
+  background-color: var(--grey-100);
+  background-image: radial-gradient(
+    var(--halftone-ink) var(--halftone-dot, 1.6px),
+    transparent var(--halftone-dot, 1.6px)
+  );
+  background-size: 7px 7px;
+  overflow: hidden;
+}
+
+/* Density falls off across the field so it reads as a gradient of ink coverage
+   rather than a flat screen. */
+.halftone::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    var(--halftone-angle, 155deg),
+    transparent 0%,
+    var(--grey-100) 78%
+  );
+}
+
+.halftone--ink {
+  --halftone-ink: var(--black);
+}
+
+.halftone--blue {
+  --halftone-ink: var(--c-blue);
+}
+
+.halftone--sky {
+  --halftone-ink: var(--c-sky);
+}
+
+.halftone--green {
+  --halftone-ink: var(--c-green);
+}
+
+.halftone--lime {
+  --halftone-ink: var(--c-lime);
+}
+
+.halftone--gold {
+  --halftone-ink: var(--c-gold);
+}
+
+.halftone--periwinkle {
+  --halftone-ink: var(--c-periwinkle);
+}
+
+.halftone--dense {
+  --halftone-dot: 2.4px;
+  background-size: 6px 6px;
+}
+
+/* The faint square grid the reference lays behind its quieter sections. */
+.grid-motif {
+  position: relative;
+  background-image:
+    linear-gradient(to right, var(--grey-100) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grey-100) 1px, transparent 1px);
+  background-size: 64px 64px;
+  background-position: center;
+}
+
+/* 8. Mono labels + highlight blocks -------------------------------------- */
+
+.label {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  /* grey-500 lands at 4.12:1 on white — under AA for 13px text. */
+  color: var(--grey-600);
+}
+
+/* Deliberately NOT the orange: 13px orange on white measures 3.06:1. The
+   reference sets its labels in grey for the same reason. This darkens toward the
+   accent without leaving AA. */
+.label--accent {
+  color: var(--grey-700);
+}
+
+/* Headline highlight: an inline accent block that wraps with the text, one box
+   per line. `box-decoration-break: clone` is what keeps the padding on every
+   line rather than only the first and last. */
+.mark {
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 0.02em 0.36em 0.18em;
+  background: var(--accent);
+  color: var(--white);
+}
+
+.mark--red {
+  background: var(--c-red);
+}
+
+.mark--blue {
+  background: var(--c-blue);
+}
+
+.mark--sky {
+  background: var(--c-sky);
+}
+
+.mark--highlight {
+  background: #fffacd;
+  color: var(--text);
+}
+
+.mark--navy {
+  background: var(--c-navy);
+}
+
+.mark--ink {
+  background: var(--black);
+}
+
+/* Emphasis inside a heading: coloured text, no painted ground. The filled
+   `.mark` block is now reserved for the hero lock-up and for inline chips in
+   body copy, where it reads as a highlighter rather than as a slab behind every
+   section title. */
+.hi {
+  color: var(--accent);
+}
+
+.hi--ink {
+  color: var(--black);
+}
+
+/* Pastel marks — the treatment on "Don't use the web. Scale it." */
+.mark--pink,
+.mark--periwinkle,
+.mark--paleblue,
+.mark--cream,
+.mark--mint {
+  color: var(--black);
+}
+
+.mark--pink {
+  background: var(--t-pink);
+}
+
+.mark--periwinkle {
+  background: var(--t-periwinkle);
+}
+
+.mark--paleblue {
+  background: var(--t-blue);
+}
+
+.mark--cream {
+  background: var(--t-cream);
+}
+
+.mark--mint {
+  background: var(--t-mint);
+}
+
+/* Light grounds flip the text to black. */
+.mark--sky,
+.mark--green,
+.mark--lime,
+.mark--yellow,
+.mark--gold {
+  color: var(--black);
+}
+
+.mark--sky {
+  background: var(--c-sky);
+}
+
+.mark--green {
+  background: var(--c-green);
+}
+
+.mark--lime {
+  background: var(--c-lime);
+}
+
+.mark--yellow {
+  background: var(--c-yellow);
+}
+
+.mark--gold {
+  background: var(--c-gold);
+}
+
+/* 9. Forms --------------------------------------------------------------- */
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.field label {
+  font-size: var(--fs-small);
+  font-weight: 500;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--grey-300);
+  border-radius: var(--r-md);
+  background: var(--white);
+  color: var(--black);
+  font: inherit;
+  font-size: var(--fs-body);
+  transition: border-color 120ms ease;
+}
+
+.field input:hover,
+.field textarea:hover {
+  border-color: var(--grey-500);
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: var(--black);
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 128px;
+}
+
+/* 10. Accessibility + motion --------------------------------------------- */
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.on-dark :focus-visible {
+  outline-color: var(--white);
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--gutter);
+  top: 0;
+  z-index: 100;
+  padding: 12px 18px;
+  border-radius: 0 0 var(--r-md) var(--r-md);
+  /* Black, not the orange: white on #ff5e19 is 3.06:1, and an accessibility
+     affordance is the last thing that should fail contrast. */
+  background: var(--black);
+  color: var(--white);
+  font-weight: 500;
+  text-decoration: none;
+  transform: translateY(-120%);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline-offset: -4px;
+  outline-color: var(--white);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Terminal typing. Applied from script with steps() set to the line's exact
+   character count, which only lands cleanly because the type is monospace. */
+@keyframes ltType {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

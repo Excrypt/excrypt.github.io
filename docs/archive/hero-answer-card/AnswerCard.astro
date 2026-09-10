@@ -1,0 +1,335 @@
+---
+/**
+ * The hero exhibit: an AI assistant answering a buyer's sourcing question,
+ * drawn in the same pixel idiom as the rest of the site.
+ *
+ * Deliberately generic. It is not modelled on ChatGPT, Claude or Perplexity —
+ * no product marks, no borrowed interface colours. It reads as "an assistant"
+ * without wearing anyone's trade dress.
+ *
+ * THE RESOLVED STATE IS THE MARKUP. The list below already contains the
+ * client's shop at position one and the closing line already reads "Now it is."
+ * With JavaScript off, or under `prefers-reduced-motion`, that is what renders —
+ * a correct static image. The animation only ever rewinds to the earlier state
+ * and plays forward into what is already here.
+ *
+ * Shop names are invented.
+ */
+const question =
+  'who can embroider 300 hoodies in DFW with a two week turnaround?';
+
+const results = [
+  { name: 'Crosstown Embroidery', meta: 'Dallas · 24-piece minimum · 8 business days', you: true },
+  { name: 'Trinity Stitch Co.', meta: 'Dallas · 48-piece minimum · 10 business days', you: false },
+  { name: 'Lone Star Thread Works', meta: 'Fort Worth · 24-piece minimum · 12 business days', you: false },
+  { name: 'Bluebonnet Apparel', meta: 'Plano · 72-piece minimum · 9 business days', you: false },
+];
+---
+
+<figure class="ac" data-answer-card>
+  <div class="ac__q">
+    <span class="ac__avatar" aria-hidden="true"></span>
+    <p class="ac__q-text ac__reveal" data-step="0">{question}</p>
+  </div>
+
+  <div class="ac__a">
+    <p class="ac__intro ac__reveal" data-step="1">
+      Three shops in Dallas–Fort Worth can take that:
+    </p>
+
+    <ol class="ac__list">
+      {
+        results.map((r, i) => (
+          <li class:list={['ac__row', r.you && 'ac__row--you']}>
+            {r.you && (
+              <span class="ac__ghost" aria-hidden="true">
+                <span class="ac__ghost-bar ac__ghost-bar--name" />
+                <span class="ac__ghost-bar ac__ghost-bar--meta" />
+              </span>
+            )}
+            <span class:list={['ac__row-body', !r.you && 'ac__reveal']} data-step={i + 2}>
+              <span class="ac__name">{r.name}</span>
+              <span class="ac__meta">{r.meta}</span>
+            </span>
+          </li>
+        ))
+      }
+    </ol>
+
+    <p class="ac__close">
+      <span class="ac__close-before" aria-hidden="true">
+        Your shop wasn't in that answer.
+      </span>
+      <span class="ac__close-after">Now it is.</span>
+    </p>
+  </div>
+</figure>
+
+<style>
+  /* Hard-edged, square, no shadow. The border is a scaled-up pixel rule. */
+  .ac {
+    margin: 0;
+    border: 3px solid var(--black);
+    background: var(--white);
+    text-align: left;
+  }
+
+  .ac__q {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 16px 14px;
+    border-bottom: 3px solid var(--black);
+    background: var(--grey-50);
+  }
+
+  /* A four-block pixel cluster, not a face and not anybody's logo. */
+  .ac__avatar {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    background:
+      linear-gradient(var(--grey-500) 0 0) 0 0 / 8px 8px no-repeat,
+      linear-gradient(var(--grey-300) 0 0) 10px 0 / 8px 8px no-repeat,
+      linear-gradient(var(--grey-300) 0 0) 0 10px / 8px 8px no-repeat,
+      linear-gradient(var(--grey-500) 0 0) 10px 10px / 8px 8px no-repeat;
+  }
+
+  .ac__q-text {
+    font-size: var(--fs-small);
+    line-height: 1.4;
+    color: var(--grey-600);
+  }
+
+  .ac__a {
+    padding: 16px;
+  }
+
+  .ac__intro {
+    font-size: var(--fs-small);
+    color: var(--grey-600);
+  }
+
+  .ac__list {
+    counter-reset: ac;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ac__row {
+    counter-increment: ac;
+    position: relative;
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    align-items: start;
+    gap: 2px 6px;
+    padding: 9px 0;
+    border-top: 1px solid var(--grey-200);
+  }
+
+  .ac__row:first-child {
+    border-top: 0;
+  }
+
+  .ac__row::before {
+    content: counter(ac);
+    grid-row: 1 / span 2;
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono);
+    line-height: 1.35;
+    color: var(--grey-400);
+  }
+
+  .ac__row-body {
+    display: contents;
+  }
+
+  .ac__name {
+    font-size: var(--fs-body);
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
+  .ac__meta {
+    grid-column: 2;
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono);
+    line-height: 1.35;
+    color: var(--grey-600);
+  }
+
+  .ac__close {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 3px solid var(--black);
+    font-size: var(--fs-body);
+    font-weight: 500;
+  }
+
+  /* Lime is the single moment of contrast on this page, and this is it. */
+  .ac__close-after {
+    background: var(--c-lime);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    padding: 0.06em 0.3em 0.14em;
+    color: var(--black);
+  }
+
+  .ac__close-before {
+    color: var(--accent);
+  }
+
+  /* --- Static / no-JS / reduced-motion is the resolved state ---------------
+     Everything above renders the finished answer. The rules below only take
+     effect once the card is actually going to animate. */
+
+  .ac__ghost,
+  .ac__close-before {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    /* `scripting: enabled` lets the rewound state land in CSS before any script
+       runs, so there is no flash of the resolved answer on load. The data
+       attribute is a fallback for engines without that media feature. */
+    @media (scripting: enabled) {
+      .ac[data-answer-card]:not([data-state='done']) .ac__reveal {
+        clip-path: inset(0 100% 0 0);
+      }
+
+      .ac[data-answer-card]:not([data-state='done']) .ac__row--you .ac__row-body {
+        visibility: hidden;
+      }
+
+      .ac[data-answer-card]:not([data-state='done']) .ac__ghost {
+        display: grid;
+      }
+
+      .ac[data-answer-card]:not([data-state='done']) .ac__close-after {
+        display: none;
+      }
+
+      .ac[data-answer-card]:not([data-state='done']) .ac__close-before {
+        display: inline;
+      }
+    }
+
+    .ac__reveal.is-in {
+      animation: acReveal 300ms steps(9) forwards;
+    }
+
+    .ac[data-state='done'] .ac__row--you .ac__row-body {
+      animation: acReveal 320ms steps(9) forwards;
+    }
+  }
+
+  /* The ghost row: position one, printed but not yet inked. It reserves the
+     row's exact height, so nothing on the page shifts when the shop resolves
+     into it. */
+  .ac__ghost {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: stretch;
+    gap: 6px;
+    align-content: start;
+  }
+
+  .ac__ghost-bar {
+    display: block;
+    height: 0.72em;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--grey-200) 0 4px,
+      transparent 4px 8px
+    );
+  }
+
+  .ac__ghost-bar--name {
+    width: 62%;
+  }
+
+  .ac__ghost-bar--meta {
+    width: 84%;
+    height: 0.6em;
+  }
+
+  @keyframes acReveal {
+    from {
+      clip-path: inset(0 100% 0 0);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+
+  @media (min-width: 48rem) {
+    .ac__q {
+      padding: 20px 22px 18px;
+    }
+
+    .ac__a {
+      padding: 22px;
+    }
+
+    .ac__row {
+      grid-template-columns: 28px minmax(0, 1fr);
+      padding: 11px 0;
+    }
+  }
+</style>
+
+<script>
+  /**
+   * The one animated moment on the site.
+   *
+   * Sequencing only — every visual state is a CSS class. The card's markup is
+   * already the finished answer, so this rewinds to the earlier state, plays the
+   * build, then lands back on what the HTML said all along. Runs once, never
+   * loops, and does nothing at all under `prefers-reduced-motion`.
+   */
+  const card = document.querySelector<HTMLElement>('[data-answer-card]');
+
+  if (card && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const steps = [...card.querySelectorAll<HTMLElement>('.ac__reveal')].sort(
+      (a, b) => Number(a.dataset.step || 0) - Number(b.dataset.step || 0)
+    );
+
+    let played = false;
+
+    const play = () => {
+      if (played) return;
+      played = true;
+
+      // Question, intro, then the three shops that were in the answer.
+      steps.forEach((el, i) => {
+        window.setTimeout(() => el.classList.add('is-in'), 120 + i * 210);
+      });
+
+      // A beat after the last line lands, the client's shop resolves into
+      // position one and the closing line turns over.
+      const settled = 120 + steps.length * 210 + 300;
+      window.setTimeout(() => {
+        card.dataset.state = 'done';
+      }, settled + 620);
+    };
+
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              play();
+              io.disconnect();
+            }
+          }
+        },
+        { threshold: 0.25 }
+      );
+      io.observe(card);
+    } else {
+      play();
+    }
+  }
+</script>

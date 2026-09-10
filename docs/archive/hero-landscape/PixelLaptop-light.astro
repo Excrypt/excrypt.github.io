@@ -1,0 +1,194 @@
+---
+/**
+ * A pixel laptop showing an assistant answering the question in the headline.
+ *
+ * Square corners, chunky black rules, no shadows, mono type — the same pixel
+ * idiom as the dithered ridge it sits on. Not modelled on any real assistant's
+ * interface: no product marks, no borrowed colours.
+ *
+ * It is an illustration of the claim the headline already makes, so the whole
+ * thing carries one `role="img"` and a label rather than exposing a wall of
+ * duplicated text to assistive tech.
+ *
+ * The markup renders the FIRST query fully resolved. With JavaScript off, or
+ * under `prefers-reduced-motion`, that is what stays on screen.
+ */
+interface Props {
+  ask: string;
+  results: string[];
+}
+const { ask, results } = Astro.props;
+---
+
+<div
+  class="lt"
+  role="img"
+  aria-label="A laptop showing an AI assistant answering a buyer's sourcing question by naming three shops"
+>
+  <div class="lt__lid">
+    <div class="lt__bar" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+
+    <div class="lt__screen">
+      <p class="lt__ask" data-lt-ask>{ask}</p>
+      <ul class="lt__results" data-lt-results>
+        {
+          results.map((name, i) => (
+            <li class="lt__row" data-lt-row>
+              <span class="lt__n">{i + 1}</span>
+              <span class="lt__name">{name}</span>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="lt__cursor" aria-hidden="true"><span></span></p>
+    </div>
+  </div>
+  <div class="lt__base" aria-hidden="true"></div>
+</div>
+
+<style>
+  .lt {
+    width: 100%;
+    max-width: 560px;
+    margin-inline: auto;
+  }
+
+  .lt__lid {
+    border: 3px solid var(--black);
+    background: var(--black);
+  }
+
+  .lt__bar {
+    display: flex;
+    gap: 4px;
+    padding: 6px 7px;
+  }
+
+  .lt__bar span {
+    width: 5px;
+    height: 5px;
+    background: var(--grey-500);
+  }
+
+  .lt__screen {
+    padding: 9px 9px 7px;
+    background: var(--white);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1.55;
+    text-align: left;
+  }
+
+  /* Typed lines: monospace + steps() is the classic terminal build, and it is
+     what makes this read as an old game rather than a modern fade. Width is
+     driven from script so the step count always equals the character count. */
+  .lt__ask,
+  .lt__name {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .lt__ask {
+    color: var(--grey-600);
+    border-bottom: 2px solid var(--grey-200);
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+  }
+
+  .lt__ask::before {
+    content: '> ';
+    color: var(--accent);
+  }
+
+  .lt__results {
+    display: grid;
+    gap: 3px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .lt__row {
+    display: grid;
+    grid-template-columns: 12px minmax(0, 1fr);
+    align-items: baseline;
+  }
+
+  .lt__n {
+    color: var(--grey-400);
+  }
+
+  .lt__name {
+    color: var(--black);
+  }
+
+  /* Block cursor, blinking on the tick of a two-frame sprite. */
+  .lt__cursor {
+    margin-top: 5px;
+    height: 10px;
+  }
+
+  .lt__cursor span {
+    display: inline-block;
+    width: 6px;
+    height: 10px;
+    background: var(--accent);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .lt__cursor span {
+      animation: ltBlink 1s steps(1, end) infinite;
+    }
+  }
+
+  @keyframes ltBlink {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    50.01%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  /* The deck. A plain wider bar with a notch reads as a laptop base at this
+     resolution better than any attempt at perspective. */
+  .lt__base {
+    position: relative;
+    width: calc(100% + 26px);
+    height: 9px;
+    margin-inline: -13px;
+    background: var(--black);
+  }
+
+  .lt__base::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 46px;
+    height: 3px;
+    background: var(--grey-500);
+    transform: translateX(-50%);
+  }
+
+  @media (min-width: 30rem) {
+    .lt__screen {
+      font-size: 13px;
+      padding: 14px 14px 12px;
+    }
+
+    .lt__row {
+      grid-template-columns: 15px minmax(0, 1fr);
+    }
+
+    .lt__cursor span {
+      width: 7px;
+      height: 12px;
+    }
+  }
+</style>

@@ -1,0 +1,199 @@
+---
+/**
+ * The three steps, as tinted blocks.
+ *
+ * Each step carries one of the site's tint tokens, and its number sits on a
+ * pixel badge drawn from a ramp hovering around that same tint — so the badge
+ * reads as a deeper patch of the block it sits on rather than as a separate
+ * object. Text is near-black on all of them, which is what those pastels are
+ * for; white would fail contrast on every one.
+ *
+ * The number sits OUTSIDE its block, in a gutter to the left, so the block's
+ * copy starts at its own left edge rather than being indented around it.
+ *
+ * MOBILE stacks the blocks: each sticks below the header and the next scrolls
+ * over it. They stick at the same `top`, so a block fully replaces the one under
+ * it rather than leaving a sliver — with solid colour blocks a sliver reads as a
+ * stripe of the wrong colour rather than as a stack. The badges sit in the
+ * gutter and land on each other for the same reason.
+ *
+ * There was a pixel rail down a left gutter connecting the badges. Removed at
+ * the client's request; the tints carry the sequence now.
+ */
+import DitherCanvas from '../DitherCanvas.astro';
+
+const steps = [
+  {
+    n: '01',
+    title: 'Audit',
+    body:
+      'We ask Google and four AI assistants the questions your buyers ask, and show ' +
+      'you the answers — including the ones naming your competitors and not you.',
+    tint: 'pink',
+    tone: 'blush' as const,
+  },
+  {
+    n: '02',
+    title: 'Build',
+    body:
+      'We correct the record, write the first set of answer pages, and build the site ' +
+      'if you need one. Everything is registered in your name as we go.',
+    tint: 'periwinkle',
+    tone: 'lavender' as const,
+  },
+  {
+    n: '03',
+    title: 'Monthly',
+    body:
+      'We add answers, keep the profile current, and track where you turn up. You get ' +
+      'a plain report of what changed and what came in.',
+    tint: 'blue',
+    tone: 'ice' as const,
+  },
+];
+---
+
+<section class="section" id="how-it-works">
+  <div class="container">
+    <div class="section-head">
+      <h2>Audit, build, then <span class="hi">every month</span></h2>
+      <p class="lead">
+        Each step says what you have to do, because the real question is how much of
+        your time this costs.
+      </p>
+    </div>
+
+    <ol class="steps">
+      {
+        steps.map((step, i) => (
+          <li class="steps__item" data-tint={step.tint}>
+            <span class="steps__badge" aria-hidden="true">
+              <DitherCanvas variant="field" tone={step.tone} cell={3} seed={31 + i * 13} />
+              <span class="steps__n tnum">{step.n}</span>
+            </span>
+            <div class="steps__main">
+              <h3>{step.title}</h3>
+              <p class="steps__body">{step.body}</p>
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>
+
+<style>
+  .steps {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    /* The gutter the numbers live in. */
+    padding: 0 0 0 46px;
+    list-style: none;
+  }
+
+  .steps__item {
+    position: sticky;
+    /* Clears the 72px sticky header. One value for all three: a solid colour
+       block peeking out from under the next one reads as a stripe of the wrong
+       colour, not as a stack. */
+    top: 84px;
+    padding: 22px 20px;
+    border-radius: var(--r-lg);
+    background: var(--tint);
+    /* Near-black on the tint. These pastels exist to carry dark text. */
+    color: var(--grey-950);
+  }
+
+  .steps__item[data-tint='pink'] {
+    --tint: var(--t-pink);
+  }
+
+  .steps__item[data-tint='periwinkle'] {
+    --tint: var(--t-periwinkle);
+  }
+
+  .steps__item[data-tint='blue'] {
+    --tint: var(--t-blue);
+  }
+
+  .steps__item h3 {
+    font-size: var(--fs-card);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+  }
+
+  .steps__body {
+    margin-top: 8px;
+    color: var(--grey-800);
+  }
+
+  /* --- the numbered badge --- */
+
+  .steps__badge {
+    position: absolute;
+    top: 20px;
+    left: -46px;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    overflow: hidden;
+    border-radius: 2px;
+    background: var(--tint);
+  }
+
+  .steps__n {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--grey-950);
+  }
+
+  /* At 320 the container already eats 80px, so a 46px gutter left the block
+     194px wide — about eleven characters a line. */
+  @media (max-width: 22.5rem) {
+    .steps {
+      padding-left: 36px;
+    }
+
+    .steps__badge {
+      left: -36px;
+      width: 28px;
+      height: 28px;
+    }
+
+    .steps__n {
+      font-size: 0.75rem;
+    }
+  }
+
+  @media (min-width: 48rem) {
+    /* One block per row, no stacking. */
+    .steps {
+      gap: 10px;
+      padding-left: 64px;
+    }
+
+    .steps__item {
+      /* `relative`, not `static`: the badge is positioned against it. */
+      position: relative;
+      top: auto;
+      padding: 32px 28px;
+    }
+
+    .steps__badge {
+      top: 32px;
+      left: -64px;
+      width: 40px;
+      height: 40px;
+    }
+
+    .steps__n {
+      font-size: var(--fs-mono);
+    }
+  }
+</style>

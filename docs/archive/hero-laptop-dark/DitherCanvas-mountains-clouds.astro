@@ -1,0 +1,370 @@
+---
+/**
+ * The pixel hero.
+ *
+ * A procedurally generated ridge landscape, colour-quantised through an ordered
+ * (Bayer 8x8) dither into a five-stop ink ramp, drawn at one-fifth resolution and
+ * scaled up with `image-rendering: pixelated`. Moving the pointer across it drags
+ * an "etch trail" that floods heat into the field, pushing those cells up the
+ * ramp — ink spreading through a screen.
+ *
+ * This is the only JavaScript on the site. It is deliberate:
+ *  - ~3 KB, no dependencies, no framework.
+ *  - Renders once on load, then repaints only while the trail is decaying, so an
+ *    untouched page costs nothing after first paint.
+ *  - Nothing on the page depends on it. The canvas sits behind the text with a
+ *    painted fallback colour, so if the script never runs the hero is still a
+ *    solid ground with legible type over it.
+ *  - Under `prefers-reduced-motion` the field is drawn once and the trail never
+ *    runs.
+ */
+interface Props {
+  /** Extra class on the wrapper. */
+  class?: string;
+  /** Seed the landscape so a given page always draws the same picture. */
+  seed?: number;
+}
+const { class: className = '', seed = 1987 } = Astro.props;
+---
+
+<div class:list={['dither', className]} data-seed={seed}>
+  <canvas class="dither__canvas pixelated" aria-hidden="true"></canvas>
+</div>
+
+<style>
+  .dither {
+    position: absolute;
+    inset: 0;
+    /* Painted fallback: if the script never runs, this is the hero ground. */
+    background: var(--sky);
+    overflow: hidden;
+  }
+
+  .dither__canvas {
+    width: 100%;
+    height: 100%;
+    /* The canvas is decorative; the ground colour behind it is what matters if
+       it fails to paint. */
+    opacity: 0;
+    transition: opacity 400ms ease;
+  }
+
+  .dither__canvas[data-ready] {
+    opacity: 1;
+  }
+</style>
+
+<script>
+  // Ordered 8x8 Bayer matrix, normalised to 0..1.
+  const BAYER = [
+    0, 32, 8, 40, 2, 34, 10, 42, 48, 16, 56, 24, 50, 18, 58, 26, 12, 44, 4, 36, 14, 46, 6,
+    38, 60, 28, 52, 20, 62, 30, 54, 22, 3, 35, 11, 43, 1, 33, 9, 41, 51, 19, 59, 27, 49,
+    17, 57, 25, 15, 47, 7, 39, 13, 45, 5, 37, 63, 31, 55, 23, 61, 29, 53, 21,
+  ].map((v) => (v + 0.5) / 64);
+
+  // Ink ramp, dark → hot → warm → pale. Read as a one-pass print build-up.
+  // The reference's own inks: grey-950, browserbase-red, orange, lime, yellow.
+  // Black is doubled so the mass stays weighted dark, as theirs is.
+  // Rock, a sparse hot speckle inside it, then green slopes, lime, and a pale
+  // crest. Orange sits LOW in the ramp on purpose: high in the ramp it banded
+  // into an orange mountain, and the reference's ridge is green with orange
+  // caught in the dark, not the other way round.
+  const LAND = [
+    [15, 15, 15],
+    [255, 69, 0],
+    [15, 15, 15],
+    [0, 150, 64],
+    [124, 186, 30],
+    [196, 214, 0],
+    [196, 214, 0],
+    [238, 240, 170],
+    [255, 250, 205],
+  ];
+
+  // primary-gray #c5d3e8 with two small lifts. The steps are kept close together
+  // on purpose: a wider sky ramp washes out toward the horizon and swallows the
+  // pale highlight behind the subhead, which sits right on top of it.
+  const SKY = [
+    [197, 211, 232],
+    [206, 218, 236],
+    [215, 225, 240],
+    [240, 245, 253],
+  ];
+
+  const CELL = 5; // device pixels per dither cell
+
+  function makeNoise(seed: number) {
+    const hash = (x: number, y: number) => {
+      let h = x * 374761393 + y * 668265263 + seed * 1274126177;
+      h = (h ^ (h >>> 13)) >>> 0;
+      h = Math.imul(h, 1274126177) >>> 0;
+      return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+    };
+    const smooth = (t: number) => t * t * (3 - 2 * t);
+    const value = (x: number, y: number) => {
+      const xi = Math.floor(x);
+      const yi = Math.floor(y);
+      const xf = smooth(x - xi);
+      const yf = smooth(y - yi);
+      const a = hash(xi, yi);
+      const b = hash(xi + 1, yi);
+      const c = hash(xi, yi + 1);
+      const d = hash(xi + 1, yi + 1);
+      return a + (b - a) * xf + (c - a) * yf + (a - b - c + d) * xf * yf;
+    };
+    return (x: number, y: number, octaves = 4) => {
+      let sum = 0;
+      let amp = 0.5;
+      let freq = 1;
+      let norm = 0;
+      for (let i = 0; i < octaves; i++) {
+        sum += value(x * freq, y * freq) * amp;
+        norm += amp;
+        amp *= 0.5;
+        freq *= 2.07;
+      }
+      return sum / norm;
+    };
+  }
+
+  function init(root: HTMLElement) {
+    const found = root.querySelector<HTMLCanvasElement>('.dither__canvas');
+    if (!found) return;
+    const context = found.getContext('2d', { alpha: false });
+    if (!context) return;
+    // Re-bound after the guards so both stay non-null inside the closures below.
+    const canvas = found;
+    const ctx = context;
+
+    const seed = Number(root.dataset.seed || 1) || 1;
+    const noise = makeNoise(seed);
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let cols = 0;
+    let rows = 0;
+    let field: Float32Array = new Float32Array(0); // 0..1 land value, <0 = sky
+    let skyline: Float32Array = new Float32Array(0);
+    let heat: Float32Array = new Float32Array(0);
+    let image: ImageData | null = null;
+    let raf = 0;
+    let running = false;
+    let phase = 0;
+    let last = 0;
+    let inView = true;
+    const drift = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function build() {
+      const rect = root.getBoundingClientRect();
+      if (!rect.width || !rect.height) return false;
+
+      cols = Math.max(1, Math.ceil(rect.width / CELL));
+      rows = Math.max(1, Math.ceil(rect.height / CELL));
+      canvas.width = cols;
+      canvas.height = rows;
+
+      field = new Float32Array(cols * rows);
+      heat = new Float32Array(cols * rows);
+      image = ctx.createImageData(cols, rows);
+
+      // Skyline: ridged noise across x. The range is kept low in the frame so
+      // the text lock-up above it always sits on open sky — the picture has to
+      // lose to the headline, not compete with it.
+      skyline = new Float32Array(cols);
+      for (let x = 0; x < cols; x++) {
+        const n = noise(x * 0.011, 0.5, 5);
+        const ridge = 1 - Math.abs(n - 0.5) * 2; // creases into peaks
+        skyline[x] = rows * (0.94 - ridge * 0.28);
+      }
+
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const i = y * cols + x;
+          const top = skyline[x];
+          if (y < top) {
+            // Sky: a faint vertical wash so the dither has something to bite on.
+            field[i] = -(0.25 + (y / rows) * 0.6);
+          } else {
+            // Depth below the skyline, plus two octaves of surface texture at
+            // different scales, plus a light rim at the crest. The texture
+            // amplitude is deliberately high: it keeps every stop of the ramp
+            // mixing all the way down, which is what gives the mass its speckle
+            // instead of banding into a flat black slab.
+            const depth = (y - top) / Math.max(1, rows - top);
+            const coarse = noise(x * 0.03, y * 0.05, 4);
+            const fine = noise(x * 0.16, y * 0.19, 2);
+            const rim = Math.max(0, 1 - depth * 6) * 0.42;
+            // Weighted so black takes over by roughly 40% depth, leaving the
+            // hot stops as a band near the crest and speckle below — which is
+            // how the reference's mass reads, rather than a solid orange slab.
+            const v =
+              0.7 - depth * 0.8 + (coarse - 0.5) * 1.25 + (fine - 0.5) * 0.5 + rim;
+            field[i] = Math.min(1, Math.max(0, v));
+          }
+        }
+      }
+      return true;
+    }
+
+    function paint() {
+      if (!image) return;
+      const d = image.data;
+      for (let y = 0; y < rows; y++) {
+        const brow = (y & 7) * 8;
+        for (let x = 0; x < cols; x++) {
+          const i = y * cols + x;
+          const threshold = BAYER[brow + (x & 7)];
+          const v = field[i];
+          let rgb: number[];
+
+          if (v < 0) {
+            // Sky, plus drifting cloud. `phase` only advances on the animation
+            // loop, so with reduced motion the clouds are simply a still layer.
+            const top = Math.max(1, skyline[x]);
+            const band = 1 - Math.min(1, y / top);
+            // Low frequency across x and lower still down y, so the shapes come
+            // out wide and flat like cloud rather than fine speckle.
+            const c = noise((x + phase) * 0.0105, y * 0.028, 4);
+            const cloud = Math.max(0, c - 0.53) * (0.32 + band * 0.68) * 8;
+            const t = Math.min(SKY.length - 1, -v * 1.5 + cloud);
+            const lo = Math.min(SKY.length - 1, Math.floor(t));
+            rgb = SKY[t - lo > threshold ? Math.min(SKY.length - 1, lo + 1) : lo];
+          } else {
+            const t = Math.min(1, v + heat[i]) * (LAND.length - 1);
+            const lo = Math.min(LAND.length - 1, Math.floor(t));
+            rgb = LAND[t - lo > threshold ? Math.min(LAND.length - 1, lo + 1) : lo];
+          }
+
+          const o = i * 4;
+          d[o] = rgb[0];
+          d[o + 1] = rgb[1];
+          d[o + 2] = rgb[2];
+          d[o + 3] = 255;
+        }
+      }
+      ctx.putImageData(image, 0, 0);
+    }
+
+    /**
+     * One loop for both moving things: the drifting cloud layer and the decay of
+     * the pointer trail. Throttled to ~16fps — at a five-pixel grid the picture
+     * is chunky by construction, so a higher rate buys nothing and costs
+     * battery. It parks itself whenever the hero is off screen or the tab is
+     * hidden, and never starts at all under reduced motion unless the trail
+     * needs it.
+     */
+    function tick(now: number) {
+      let alive = false;
+      for (let i = 0; i < heat.length; i++) {
+        if (heat[i] > 0.002) {
+          heat[i] *= 0.9;
+          alive = true;
+        } else if (heat[i] !== 0) {
+          heat[i] = 0;
+        }
+      }
+
+      if (now - last >= 60) {
+        if (drift) phase += (now - last) * 0.0075;
+        last = now;
+        paint();
+      }
+
+      const keep = alive || (drift && inView && !document.hidden);
+      if (keep) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        running = false;
+      }
+    }
+
+    function run() {
+      if (running) return;
+      running = true;
+      last = 0;
+      raf = requestAnimationFrame(tick);
+    }
+
+    function flood(clientX: number, clientY: number) {
+      const rect = root.getBoundingClientRect();
+      const cx = (clientX - rect.left) / CELL;
+      const cy = (clientY - rect.top) / CELL;
+      const r = 13;
+      const y0 = Math.max(0, Math.floor(cy - r));
+      const y1 = Math.min(rows - 1, Math.ceil(cy + r));
+      const x0 = Math.max(0, Math.floor(cx - r));
+      const x1 = Math.min(cols - 1, Math.ceil(cx + r));
+      for (let y = y0; y <= y1; y++) {
+        for (let x = x0; x <= x1; x++) {
+          const dx = x - cx;
+          const dy = y - cy;
+          const d = Math.sqrt(dx * dx + dy * dy);
+          if (d > r) continue;
+          const i = y * cols + x;
+          heat[i] = Math.min(0.85, heat[i] + (1 - d / r) * 0.3);
+        }
+      }
+      run();
+    }
+
+    function start() {
+      // A resize can land mid-decay; drop the old loop before rebuilding the
+      // buffers it is reading from.
+      cancelAnimationFrame(raf);
+      running = false;
+      if (build()) {
+        paint();
+        canvas.dataset.ready = '';
+      }
+    }
+
+    start();
+
+    if (drift) {
+      if ('IntersectionObserver' in window) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            inView = entries.some((e) => e.isIntersecting);
+            if (inView) run();
+          },
+          { threshold: 0 }
+        );
+        io.observe(root);
+      }
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) run();
+      });
+      run();
+    }
+
+    let resizeTimer = 0;
+    const ro = new ResizeObserver(() => {
+      clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(start, 120);
+    });
+    ro.observe(root);
+
+    if (!reduced && matchMedia('(hover: hover)').matches) {
+      let pending = false;
+      let lx = 0;
+      let ly = 0;
+      addEventListener(
+        'pointermove',
+        (e) => {
+          lx = e.clientX;
+          ly = e.clientY;
+          if (pending) return;
+          pending = true;
+          requestAnimationFrame(() => {
+            pending = false;
+            const rect = root.getBoundingClientRect();
+            if (ly < rect.top || ly > rect.bottom) return;
+            flood(lx, ly);
+          });
+        },
+        { passive: true }
+      );
+    }
+  }
+
+  document.querySelectorAll<HTMLElement>('.dither').forEach(init);
+</script>

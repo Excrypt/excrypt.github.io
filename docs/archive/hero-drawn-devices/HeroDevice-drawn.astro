@@ -1,0 +1,305 @@
+---
+/**
+ * The device in the hero, showing a dark chat assistant answering the query in
+ * the headline.
+ *
+ * ONE shell, two shapes. Rather than shipping separate components and separate
+ * copies of the chat — which would mean several sets of the `data-lt-*` hooks the
+ * hero script drives — the frame's proportions, radius, bezel and camera are all
+ * custom properties that change at the breakpoints:
+ *
+ *   mobile   phone    9:19   pill island
+ *   tablet   laptop  16:10   camera dot   (same shape, smaller)
+ *   desktop  laptop  16:10   camera dot
+ *
+ * The frame is drawn in CSS with real device proportions and is deliberately
+ * *not* pixelated, so the object reads against the pixel sky behind it.
+ * Everything on the screen stays pixel: monospace, square corners, hard rules.
+ *
+ * No product name, wordmark or logo of any assistant appears anywhere in it.
+ *
+ * NOTE ON PHOTOGRAPHY: these are drawn devices. Real photographs of an iPhone
+ * and a MacBook were asked for and cannot be produced here — see
+ * docs/before-launch.md for the two shots needed and how the chat composites
+ * onto them. `.lt__screen` is positioned independently of the frame, so dropping
+ * a photo in behind it does not touch the chat or the script that drives it.
+ *
+ * The markup renders the FIRST query fully resolved, so with JavaScript off or
+ * under `prefers-reduced-motion` the screen still reads correctly.
+ */
+interface Props {
+  ask: string;
+  results: string[];
+}
+const { ask, results } = Astro.props;
+---
+
+<div
+  class="device"
+  role="img"
+  aria-label="A device showing an AI assistant answering a buyer's sourcing question by naming three shops"
+>
+  <div class="device__body">
+    <div class="device__screen">
+      <span class="device__island" aria-hidden="true"></span>
+      <span class="device__cam" aria-hidden="true"></span>
+
+      <div class="lt__screen">
+        <div class="lt__turn lt__turn--user">
+          <p class="lt__bubble"><span class="lt__ask" data-lt-ask>{ask}</span></p>
+        </div>
+
+        <div class="lt__turn lt__turn--bot">
+          <span class="lt__avatar" aria-hidden="true"></span>
+          <div class="lt__reply">
+            <p class="lt__lede">Three shops can take that:</p>
+            <ul class="lt__results" data-lt-results>
+              {
+                results.map((name, i) => (
+                  <li class="lt__row" data-lt-row>
+                    <span class="lt__n">{i + 1}</span>
+                    <span class="lt__name">{name}</span>
+                  </li>
+                ))
+              }
+            </ul>
+            <p class="lt__caret" aria-hidden="true"><span></span></p>
+          </div>
+        </div>
+
+        <div class="lt__composer" aria-hidden="true">
+          <span class="lt__placeholder">Ask a question</span>
+          <span class="lt__send"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Phone — the mobile default. */
+  .device {
+    --dev-w: 232px;
+    --dev-aspect: 9 / 19;
+    --dev-radius: 34px;
+    --dev-screen-radius: 27px;
+    --dev-pad: 7px;
+    --dev-inset: 8px;
+    --dev-top: 30px;
+    --dev-font: 8px;
+    --dev-gap: 10px;
+
+    width: 100%;
+    max-width: var(--dev-w);
+    margin-inline: auto;
+  }
+
+  /* Rounded shell: the one thing on the page that is not hard-edged, on purpose.
+     A device is a rounded object, and the contrast with the pixel sky is what
+     makes it read as a real thing in an illustrated scene. */
+  .device__body {
+    position: relative;
+    padding: var(--dev-pad);
+    border-radius: var(--dev-radius);
+    background: linear-gradient(160deg, #3a3a3c 0%, #0b0b0c 42%, #2b2b2d 100%);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.55),
+      0 18px 34px -18px rgba(0, 0, 0, 0.6);
+  }
+
+  .device__screen {
+    position: relative;
+    border-radius: var(--dev-screen-radius);
+    background: var(--grey-950);
+    overflow: hidden;
+    aspect-ratio: var(--dev-aspect);
+  }
+
+  .device__island {
+    position: absolute;
+    top: 7px;
+    left: 50%;
+    z-index: 2;
+    width: 54px;
+    height: 15px;
+    border-radius: 999px;
+    background: #000;
+    transform: translateX(-50%);
+  }
+
+  .device__cam {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    z-index: 2;
+    width: 5px;
+    height: 5px;
+    border-radius: 999px;
+    background: #2f3033;
+    transform: translateX(-50%);
+    display: none;
+  }
+
+  /* --- screen contents, in the pixel idiom --- */
+
+  .lt__screen {
+    display: flex;
+    flex-direction: column;
+    gap: var(--dev-gap);
+    height: 100%;
+    padding: var(--dev-top) var(--dev-inset) 0;
+    color: var(--grey-100);
+    font-family: var(--font-mono);
+    font-size: var(--dev-font);
+    line-height: 1.5;
+    text-align: left;
+  }
+
+  .lt__turn--user {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .lt__bubble {
+    max-width: 88%;
+    padding: 0.6em 0.85em;
+    background: var(--grey-800);
+    color: var(--grey-100);
+  }
+
+  .lt__turn--bot {
+    display: grid;
+    grid-template-columns: 1.5em minmax(0, 1fr);
+    gap: 0.7em;
+  }
+
+  .lt__avatar {
+    width: 1.25em;
+    height: 1.25em;
+    margin-top: 0.15em;
+    background:
+      linear-gradient(var(--c-lime) 0 0) 0 0 / 0.5em 0.5em no-repeat,
+      linear-gradient(var(--grey-600) 0 0) right 0 top 0 / 0.5em 0.5em no-repeat,
+      linear-gradient(var(--grey-600) 0 0) left 0 bottom 0 / 0.5em 0.5em no-repeat,
+      linear-gradient(var(--accent) 0 0) right 0 bottom 0 / 0.5em 0.5em no-repeat;
+  }
+
+  .lt__lede {
+    color: var(--grey-400);
+  }
+
+  .lt__results {
+    display: grid;
+    gap: 0.25em;
+    margin: 0.6em 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .lt__row {
+    display: grid;
+    grid-template-columns: 1.15em minmax(0, 1fr);
+    align-items: baseline;
+  }
+
+  .lt__n {
+    color: var(--accent);
+  }
+
+  /* Typed lines: monospace plus steps() sized to the exact character count. */
+  .lt__ask,
+  .lt__name {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .lt__name {
+    color: var(--grey-100);
+  }
+
+  .lt__caret {
+    height: 1em;
+    margin-top: 0.5em;
+  }
+
+  .lt__caret span {
+    display: inline-block;
+    width: 0.6em;
+    height: 1em;
+    background: var(--c-lime);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .lt__caret span {
+      animation: ltBlink 1s steps(1, end) infinite;
+    }
+  }
+
+  @keyframes ltBlink {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    50.01%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .lt__composer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1em;
+    margin-top: auto;
+    margin-bottom: 1.2em;
+    padding: 0.75em 0.85em;
+    border: 2px solid var(--grey-700);
+    background: var(--grey-900);
+  }
+
+  .lt__placeholder {
+    color: var(--grey-600);
+  }
+
+  .lt__send {
+    width: 1.25em;
+    height: 1.25em;
+    background: var(--accent);
+  }
+
+  /* Tablet — a laptop too, just smaller. A tablet in portrait wasted the width
+     the hero has at this size; the 16:10 lid fills it. */
+  @media (min-width: 48rem) {
+    .device {
+      --dev-w: 700px;
+      --dev-aspect: 16 / 10;
+      --dev-radius: 14px;
+      --dev-screen-radius: 6px;
+      --dev-pad: 10px;
+      --dev-inset: 20px;
+      --dev-top: 26px;
+      --dev-font: 12px;
+      --dev-gap: 16px;
+    }
+
+    .device__island {
+      display: none;
+    }
+
+    .device__cam {
+      display: block;
+    }
+  }
+
+  /* Laptop, at the width the container allows. */
+  @media (min-width: 62.5em) {
+    .device {
+      --dev-w: 920px;
+      --dev-inset: 26px;
+      --dev-font: 13px;
+      --dev-gap: 18px;
+    }
+  }
+</style>

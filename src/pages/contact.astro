@@ -1,0 +1,31 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Contact from '../components/sections/Contact.astro';
+import { site, absoluteUrl } from '../data/site';
+import {
+  organizationSchema,
+  webSiteSchema,
+  localBusinessSchema,
+  breadcrumbSchema,
+} from '../lib/schema';
+
+const description =
+  `Talk to ${site.name} about getting your shop found in Google and in AI ` +
+  `assistants. Call ${site.phone.display}, email ${site.email}, or send a message.`;
+
+const schemas = [
+  organizationSchema(),
+  webSiteSchema(),
+  localBusinessSchema(),
+  breadcrumbSchema([
+    { name: 'Home', url: absoluteUrl('/') },
+    { name: 'Contact', url: absoluteUrl('/contact/') },
+  ]),
+];
+---
+
+<BaseLayout title="Contact" description={description} path="/contact/" schemas={schemas}>
+  <div class="rails">
+    <Contact />
+  </div>
+</BaseLayout>

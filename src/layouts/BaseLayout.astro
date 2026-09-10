@@ -1,0 +1,32 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import type { SchemaNode } from '../lib/schema';
+
+interface Props {
+  title?: string;
+  description?: string;
+  path: string;
+  ogType?: 'website' | 'article';
+  ogImage?: string;
+  schemas?: SchemaNode[];
+  noindex?: boolean;
+}
+const props = Astro.props;
+---
+
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <BaseHead {...props} />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

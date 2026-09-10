@@ -1,0 +1,81 @@
+---
+/**
+ * The mark.
+ *
+ * A pixel B on a 5x7 grid, drawn as SVG rects rather than set in a typeface —
+ * it costs nothing, stays perfectly sharp at any size, and it is the same pixel
+ * language as the hero dither and the halftones. Square corners, following the
+ * reference.
+ */
+interface Props {
+  /** On an accent ground the tile inverts so the mark keeps its figure/ground. */
+  invert?: boolean;
+  class?: string;
+}
+const { invert = false, class: className = '' } = Astro.props;
+
+// x, y, width for each filled run of the glyph, on a 5x7 grid.
+const PIXELS = [
+  [0, 0, 4],
+  [0, 1, 1],
+  [4, 1, 1],
+  [0, 2, 1],
+  [4, 2, 1],
+  [0, 3, 4],
+  [0, 4, 1],
+  [4, 4, 1],
+  [0, 5, 1],
+  [4, 5, 1],
+  [0, 6, 4],
+];
+---
+
+<a class:list={['wordmark', invert && 'wordmark--invert', className]} href="/">
+  <span class="wordmark__tile">
+    <svg class="wordmark__b" viewBox="0 0 5 7" aria-hidden="true" focusable="false">
+      {PIXELS.map(([x, y, w]) => <rect x={x} y={y} width={w} height="1" />)}
+    </svg>
+  </span>
+  <span class="wordmark__text">BriteUX</span>
+</a>
+
+<style>
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+
+  .wordmark__tile {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    /* Square. The reference's tile has no radius and it is a large part of why
+       the mark reads as a stamp rather than an app icon. */
+    border-radius: 0;
+    background: var(--accent);
+  }
+
+  .wordmark__b {
+    width: 16px;
+    height: 22px;
+    fill: var(--white);
+    shape-rendering: crispEdges;
+  }
+
+  .wordmark--invert .wordmark__tile {
+    background: var(--black);
+  }
+
+  .wordmark--invert .wordmark__b {
+    fill: var(--c-red);
+  }
+
+  .wordmark__text {
+    font-size: 1.375rem;
+    font-weight: 500;
+    letter-spacing: -0.035em;
+  }
+</style>

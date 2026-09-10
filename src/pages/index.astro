@@ -1,0 +1,110 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/sections/Hero.astro';
+import Capabilities from '../components/sections/Capabilities.astro';
+import Shift from '../components/sections/Shift.astro';
+import WhatWeDo from '../components/sections/WhatWeDo.astro';
+import HowItWorks from '../components/sections/HowItWorks.astro';
+import WhoWeAre from '../components/sections/WhoWeAre.astro';
+import Offer from '../components/sections/Offer.astro';
+import Faq from '../components/sections/Faq.astro';
+import CtaBand from '../components/sections/CtaBand.astro';
+import GridBand from '../components/GridBand.astro';
+
+import { site, absoluteUrl } from '../data/site';
+import { homeFaq } from '../data/faq';
+import {
+  organizationSchema,
+  webSiteSchema,
+  localBusinessSchema,
+  serviceSchema,
+  personSchema,
+  faqSchema,
+} from '../lib/schema';
+
+const schemas = [
+  organizationSchema(),
+  webSiteSchema(),
+  localBusinessSchema(),
+  serviceSchema(),
+  ...site.founders.map(personSchema),
+  faqSchema(homeFaq, absoluteUrl('/')),
+];
+---
+
+<BaseLayout path="/" schemas={schemas}>
+  <Hero />
+  <div class="rails">
+    <Capabilities />
+  </div>
+  <div class="rails">
+    {/* From the third section down, a band separates each one from the next.
+        Each carries a different arrangement so the rhythm reads as deliberate
+        rather than as one ornament repeated six times. Blocks park themselves
+        when off screen, so only the two or three bands actually in view are
+        painting at any moment. */}
+    <GridBand
+      blocks={[
+        { m: 1, spanM: 2, t: 2, spanT: 3, d: 2, spanD: 4, tone: 'navy' },
+        { m: 5, t: 8, d: 12, tone: 'sky', edge: 'bottom' },
+      ]}
+    />
+
+    <Shift />
+
+    <GridBand
+      blocks={[
+        { m: 2, t: 3, d: 4, tone: 'lime', edge: 'bottom' },
+        { m: 4, spanM: 2, t: 6, spanT: 3, d: 9, spanD: 4, tone: 'accent' },
+      ]}
+    />
+
+    <WhatWeDo />
+
+    <GridBand
+      blocks={[
+        { m: 2, spanM: 2, t: 2, spanT: 3, d: 3, spanD: 4, tone: 'navy' },
+        { m: 5, t: 8, d: 11, tone: 'lime', edge: 'bottom' },
+      ]}
+    />
+
+    <HowItWorks />
+
+    <GridBand
+      blocks={[
+        { m: 3, t: 4, d: 5, tone: 'accent', edge: 'bottom' },
+        { m: 5, spanM: 2, t: 7, spanT: 2, d: 10, spanD: 3, tone: 'sky' },
+      ]}
+    />
+
+    <WhoWeAre />
+
+    <GridBand
+      blocks={[
+        { m: 1, spanM: 2, t: 1, spanT: 3, d: 1, spanD: 3, tone: 'sky' },
+        { m: 4, t: 7, d: 10, tone: 'navy', edge: 'bottom' },
+      ]}
+    />
+
+    <Offer />
+
+    <GridBand
+      blocks={[
+        { m: 2, t: 3, d: 3, tone: 'accent' },
+        { m: 4, spanM: 2, t: 6, spanT: 4, d: 8, spanD: 5, tone: 'lime', edge: 'bottom' },
+      ]}
+    />
+
+    <Faq />
+  </div>
+
+  <GridBand
+    blocks={[
+      { m: 1, spanM: 2, t: 1, spanT: 2, d: 1, spanD: 3, tone: 'lime', edge: 'bottom' },
+      { m: 3, t: 5, d: 7, tone: 'navy' },
+      { m: 5, spanM: 2, t: 8, spanT: 3, d: 11, spanD: 4, tone: 'accent', edge: 'bottom' },
+    ]}
+  />
+
+  <CtaBand />
+</BaseLayout>

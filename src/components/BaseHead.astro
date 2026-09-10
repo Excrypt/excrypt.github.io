@@ -1,0 +1,79 @@
+---
+/**
+ * Every <head> on the site. Nothing about a page's metadata is hardcoded into a
+ * layout — it all arrives as props with sane fallbacks, so a new page gets a
+ * correct canonical, correct Open Graph and correct structured data by default.
+ */
+import { site, absoluteUrl } from '../data/site';
+import { graph, type SchemaNode } from '../lib/schema';
+import '../styles/global.css';
+
+interface Props {
+  /** Page title without the site suffix. Omit on the home page. */
+  title?: string;
+  description?: string;
+  /** Site-relative path, e.g. "/answers/". Used for the canonical and og:url. */
+  path: string;
+  /** "website" for pages, "article" for answer pages. */
+  ogType?: 'website' | 'article';
+  /** Site-relative path to a 1200x630 image. Defaults to the site card. */
+  ogImage?: string;
+  schemas?: SchemaNode[];
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description = site.description,
+  path,
+  ogType = 'website',
+  ogImage = '/og.png',
+  schemas = [],
+  noindex = false,
+} = Astro.props;
+
+const fullTitle = title ? `${title} — ${site.name}` : `${site.name} — ${site.tagline}`;
+const canonical = absoluteUrl(path);
+const image = ogImage ? absoluteUrl(ogImage) : undefined;
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{noindex && <meta name="robots" content="noindex, follow" />}
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="sitemap" href="/sitemap-index.xml" />
+
+<link rel="preload" href="/fonts/geist-latin.woff2" as="font" type="font/woff2" crossorigin />
+<link
+  rel="preload"
+  href="/fonts/geist-mono-latin.woff2"
+  as="font"
+  type="font/woff2"
+  crossorigin
+/>
+
+<meta property="og:type" content={ogType} />
+<meta property="og:site_name" content={site.name} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:locale" content="en_US" />
+{image && <meta property="og:image" content={image} />}
+{image && <meta property="og:image:width" content="1200" />}
+{image && <meta property="og:image:height" content="630" />}
+
+<meta name="twitter:card" content={image ? 'summary_large_image' : 'summary'} />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+{image && <meta name="twitter:image" content={image} />}
+
+{
+  schemas.length > 0 && (
+    <script type="application/ld+json" set:html={graph(schemas)} is:inline />
+  )
+}

@@ -1,0 +1,48 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { site } from '../data/site';
+---
+
+<BaseLayout
+  title="Page not found"
+  description="That page does not exist."
+  path="/404/"
+  noindex
+>
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h1>That page is not here</h1>
+        <p class="lead muted">
+          It may have moved, or the link may be wrong. The two places worth trying are
+          below, or you can call us.
+        </p>
+      </div>
+      <ul class="notfound__links">
+        <li><a href="/">What {site.name} does</a></li>
+        <li><a href="/answers/">Answers</a></li>
+      </ul>
+
+      <p class="notfound__cta">
+        <a class="pill pill--primary pill--lg" href="/contact/">
+          Talk to us<span class="pill__chev" aria-hidden="true" />
+        </a>
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .notfound__links {
+    margin: 0;
+    padding-left: 20px;
+  }
+
+  .notfound__links li + li {
+    margin-top: 8px;
+  }
+
+  .notfound__cta {
+    margin-top: 32px;
+  }
+</style>

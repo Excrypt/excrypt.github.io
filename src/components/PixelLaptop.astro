@@ -1,0 +1,267 @@
+---
+/**
+ * A laptop screen showing a dark-mode chat assistant, drawn in the pixel idiom:
+ * monospace, square corners, hard 2px rules, blocky avatars, no shadows.
+ *
+ * It carries no product name, wordmark or logo of any assistant. What it borrows
+ * is the generic shape of a chat — a message from the person, a reply beneath
+ * it, a composer at the foot — which is common to every one of them.
+ *
+ * The laptop is cropped by the hero frame, so it has no base and no bottom edge:
+ * the screen rises out of the bottom of the section.
+ *
+ * The markup renders the FIRST query fully resolved. With JavaScript off, or
+ * under `prefers-reduced-motion`, that is what stays on screen.
+ */
+interface Props {
+  ask: string;
+  results: string[];
+}
+const { ask, results } = Astro.props;
+---
+
+<div
+  class="lt"
+  role="img"
+  aria-label="A laptop screen showing an AI assistant answering a buyer's sourcing question by naming three shops"
+>
+  <div class="lt__lid">
+    <div class="lt__bar" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+
+    <div class="lt__screen">
+      <div class="lt__turn lt__turn--user">
+        <p class="lt__bubble"><span class="lt__ask" data-lt-ask>{ask}</span></p>
+      </div>
+
+      <div class="lt__turn lt__turn--bot">
+        <span class="lt__avatar" aria-hidden="true"></span>
+        <div class="lt__reply">
+          <p class="lt__lede">Three shops can take that:</p>
+          <ul class="lt__results" data-lt-results>
+            {
+              results.map((name, i) => (
+                <li class="lt__row" data-lt-row>
+                  <span class="lt__n">{i + 1}</span>
+                  <span class="lt__name">{name}</span>
+                </li>
+              ))
+            }
+          </ul>
+          <p class="lt__caret" aria-hidden="true"><span></span></p>
+        </div>
+      </div>
+
+      <div class="lt__composer" aria-hidden="true">
+        <span class="lt__placeholder">Ask a question</span>
+        <span class="lt__send"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .lt {
+    width: 100%;
+    max-width: 560px;
+    margin-inline: auto;
+  }
+
+  /* No bottom border — the frame crops it, and a rule there would read as the
+     laptop ending rather than continuing past the fold. */
+  .lt__lid {
+    border: 3px solid var(--black);
+    border-bottom: 0;
+    background: var(--grey-950);
+  }
+
+  .lt__bar {
+    display: flex;
+    gap: 4px;
+    padding: 6px 7px;
+    background: var(--black);
+  }
+
+  .lt__bar span {
+    width: 5px;
+    height: 5px;
+    background: var(--grey-600);
+  }
+
+  .lt__screen {
+    /* Tall enough that the top of the screen clears the ridge line — against the
+       dark rock a short screen simply disappears. The composer is pushed to the
+       foot, which is the part the frame crops. */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 205px;
+    padding: 12px 10px 0;
+    background: var(--grey-950);
+    color: var(--grey-100);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1.55;
+    text-align: left;
+  }
+
+  .lt__turn--user {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  /* The bubble hugs the text, so it grows as the line types in. */
+  .lt__bubble {
+    max-width: 84%;
+    padding: 6px 9px;
+    background: var(--grey-800);
+    color: var(--grey-100);
+  }
+
+  .lt__turn--bot {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  /* An abstract pixel cluster. Not anyone's mark. */
+  .lt__avatar {
+    width: 14px;
+    height: 14px;
+    margin-top: 1px;
+    background:
+      linear-gradient(var(--c-lime) 0 0) 0 0 / 6px 6px no-repeat,
+      linear-gradient(var(--grey-600) 0 0) 8px 0 / 6px 6px no-repeat,
+      linear-gradient(var(--grey-600) 0 0) 0 8px / 6px 6px no-repeat,
+      linear-gradient(var(--accent) 0 0) 8px 8px / 6px 6px no-repeat;
+  }
+
+  .lt__lede {
+    color: var(--grey-400);
+  }
+
+  .lt__results {
+    display: grid;
+    gap: 3px;
+    margin: 7px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .lt__row {
+    display: grid;
+    grid-template-columns: 12px minmax(0, 1fr);
+    align-items: baseline;
+  }
+
+  .lt__n {
+    color: var(--accent);
+  }
+
+  /* Typed lines: monospace plus steps() sized to the exact character count is
+     what gives the old-terminal cadence. */
+  .lt__ask,
+  .lt__name {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .lt__name {
+    color: var(--grey-100);
+  }
+
+  .lt__caret {
+    height: 10px;
+    margin-top: 5px;
+  }
+
+  .lt__caret span {
+    display: inline-block;
+    width: 6px;
+    height: 10px;
+    background: var(--c-lime);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .lt__caret span {
+      animation: ltBlink 1s steps(1, end) infinite;
+    }
+  }
+
+  @keyframes ltBlink {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    50.01%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  /* The composer sits at the foot and is the part the crop eats into. */
+  .lt__composer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: auto;
+    padding: 8px 9px;
+    border: 2px solid var(--grey-700);
+    background: var(--grey-900);
+  }
+
+  .lt__placeholder {
+    color: var(--grey-600);
+  }
+
+  .lt__send {
+    width: 14px;
+    height: 14px;
+    background: var(--accent);
+  }
+
+  @media (min-width: 30rem) {
+    .lt__screen {
+      font-size: 12px;
+      gap: 14px;
+      min-height: 265px;
+      padding: 15px 13px 0;
+    }
+
+    .lt__turn--bot {
+      grid-template-columns: 20px minmax(0, 1fr);
+    }
+
+    .lt__avatar {
+      width: 18px;
+      height: 18px;
+      background-size: 8px 8px;
+      background-position:
+        0 0,
+        10px 0,
+        0 10px,
+        10px 10px;
+    }
+
+    .lt__row {
+      grid-template-columns: 15px minmax(0, 1fr);
+    }
+
+    .lt__caret span {
+      width: 7px;
+      height: 12px;
+    }
+
+    .lt__composer {
+      padding: 10px 11px;
+    }
+
+    .lt__send {
+      width: 16px;
+      height: 16px;
+    }
+  }
+</style>

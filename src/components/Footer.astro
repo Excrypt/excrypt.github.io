@@ -1,0 +1,139 @@
+---
+import { site } from '../data/site';
+import { getCollection } from 'astro:content';
+import Wordmark from './Wordmark.astro';
+
+const answers = (await getCollection('answers', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf()
+);
+const year = new Date().getFullYear();
+---
+
+<footer class="ftr">
+  <div class="container">
+    <div class="ftr__cols">
+      <nav class="ftr__col" aria-label="Site">
+        <p class="ftr__head">Site</p>
+        <a href="/#the-shift">The shift</a>
+        <a href="/#what-we-do">What we do</a>
+        <a href="/#how-it-works">How it works</a>
+        <a href="/#who-we-are">Who we are</a>
+        <a href="/#offer">Pricing</a>
+        <a href="/#faq">Questions</a>
+        <a href="/contact/">Contact</a>
+      </nav>
+
+      <div class="ftr__col">
+        <p class="ftr__head">Contact</p>
+        <a class="tnum" href={`tel:${site.phone.e164}`}>{site.phone.display}</a>
+        <a href={`mailto:${site.email}`}>{site.email}</a>
+        <a href="/contact/">Send a message</a>
+      </div>
+
+      <nav class="ftr__col ftr__col--wide" aria-label="Answers">
+        <p class="ftr__head">Answers</p>
+        {
+          answers.map((entry) => (
+            <a href={`/answers/${entry.id}/`}>{entry.data.title}</a>
+          ))
+        }
+        <a href="/answers/">All answers</a>
+      </nav>
+    </div>
+
+    <div class="ftr__base">
+      <Wordmark invert />
+      <p class="ftr__legal">
+        &copy; {year} {site.legalName}. You own the domain, the profile and every
+        account.
+      </p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  /* Measured off their footer: #ff4500 with black text, not white. Black on this
+     ground is 6.10:1, so the whole footer clears AA — which white would not. */
+  .ftr {
+    background: var(--c-red);
+    color: var(--black);
+    padding-block: 56px 32px;
+  }
+
+  .ftr__cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px 24px;
+  }
+
+  /* Answer titles are whole questions. In a half-width column they shred into
+     three-word lines, so this one spans the row on small screens. */
+  .ftr__col--wide {
+    grid-column: 1 / -1;
+  }
+
+  .ftr__col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .ftr__head {
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono);
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--black);
+  }
+
+  .ftr__col a {
+    max-width: 30ch;
+    /* Their nav links run large and medium-weight, not list-sized. */
+    font-size: clamp(1.1875rem, 1.13rem + 0.23vw, 1.375rem);
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: -0.005em;
+    color: var(--black);
+    text-decoration: none;
+  }
+
+  .ftr__col a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+    text-decoration-thickness: 2px;
+  }
+
+  .ftr__base {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px 24px;
+    margin-top: 56px;
+    padding-top: 24px;
+    border-top: 1px solid color-mix(in srgb, var(--black) 24%, transparent);
+  }
+
+  .ftr__legal {
+    max-width: 46ch;
+    font-size: var(--fs-small);
+    line-height: 1.4;
+  }
+
+  @media (min-width: 48rem) {
+    .ftr {
+      padding-block: 88px 40px;
+    }
+
+    .ftr__cols {
+      grid-template-columns: 1fr 1fr 1.6fr;
+      gap: 48px;
+    }
+
+    .ftr__col--wide {
+      grid-column: auto;
+    }
+  }
+</style>
