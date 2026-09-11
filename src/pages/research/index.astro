@@ -1,0 +1,209 @@
+---
+/**
+ * The research index. One study so far, plus the two independent studies that
+ * point the same way. Every figure comes from src/data/research.ts.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { site, absoluteUrl } from '../../data/site';
+import { answerEconomy as study } from '../../data/research';
+import {
+  organizationSchema,
+  webSiteSchema,
+  breadcrumbSchema,
+} from '../../lib/schema';
+
+const description =
+  'The research behind what BriteUX sells: G2 on half of B2B buyers starting with an ' +
+  'AI assistant, cross-checked against Forrester and TrustRadius.';
+
+const schemas = [
+  organizationSchema(),
+  webSiteSchema(),
+  breadcrumbSchema([
+    { name: 'Home', url: absoluteUrl('/') },
+    { name: 'Research', url: absoluteUrl('/research/') },
+  ]),
+];
+---
+
+<BaseLayout
+  title="Research"
+  description={description}
+  path="/research/"
+  schemas={schemas}
+>
+  <div class="rails">
+    <section class="page-hero">
+      <div class="container page-hero__inner">
+        <p class="label">Research</p>
+        <h1>The numbers this <span class="hi">is built on</span></h1>
+        <p class="lead page-hero__body">
+          We sell against a change in buyer behaviour, so the measurements of that change
+          are worth showing in full — including who was surveyed and who was not.
+        </p>
+      </div>
+    </section>
+
+    <section class="page-band page-band--alt">
+      <div class="container">
+        <article class="rx-study">
+          <div class="rx-study__text">
+            <p class="label">{study.publisher} · April 2026</p>
+            <h2 class="rx-study__title">{study.reportTitle}</h2>
+            <p class="muted rx-study__body">
+              {study.sampleSize} business buyers, surveyed in {study.fieldwork} across {
+                study.regions
+              }, plus {study.interviews}. Led by {study.lead}, {study.leadRole}.
+            </p>
+            <p class="rx-quote">“{study.quote}”</p>
+            <div class="rx-study__cta">
+              <a class="pill pill--primary" href={study.path}>
+                Read our summary<span class="pill__chev" aria-hidden="true"></span>
+              </a>
+            </div>
+          </div>
+
+          <ul class="rx-points checklist">
+            {
+              study.points.map((point) => (
+                <li>
+                  <span class="chip" style="--tint: var(--t-blue)">Finding</span>
+                  <span>{point}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="page-band">
+      <div class="container">
+        <div class="page-band__head">
+          <h2>What else {study.sampleSize} buyers said</h2>
+        </div>
+
+        <ul class="tiles tiles-4">
+          {
+            study.cards.map((card) => (
+              <li class="tile tile--tint" style={`--tint: var(--t-${card.tint === 'grey' ? 'periwinkle' : card.tint})`}>
+                <p class="tile__num">{card.value}</p>
+                <p class="label rx-card__label">{card.label}</p>
+              </li>
+            ))
+          }
+        </ul>
+
+        <p class="small muted rx-caveat">
+          G2 surveyed buyers of software, not buyers of printed apparel. It is used here
+          because it is the most direct, most recent measurement of the habit this site
+          sells against, and every figure says whose buyers they were.
+        </p>
+      </div>
+    </section>
+
+    <section class="page-band page-band--alt">
+      <div class="container">
+        <div class="page-band__head">
+          <h2>Two more that point the same way</h2>
+        </div>
+
+        <ul class="tiles tiles-2">
+          {
+            study.others.map((other) => (
+              <li class="tile">
+                <h3 class="rx-other__name">{other.name}</h3>
+                <p class="muted">{other.finding}</p>
+                <p class="small muted">{other.detail}</p>
+                <p class="small rx-other__link">
+                  <a href={other.url} rel="noopener">
+                    Source
+                  </a>
+                </p>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+
+    <section class="cta-band">
+      <div class="container cta-band__inner">
+        <h2>Find out where you stand.</h2>
+        <p class="small muted">
+          The first month is the audit: what Google and the assistants say about your shop
+          today. {site.offer.terms}
+        </p>
+        <div class="cta-band__actions">
+          <a class="pill pill--primary" href="/contact/">
+            Talk to us<span class="pill__chev" aria-hidden="true"></span>
+          </a>
+          <a class="pill pill--secondary" href="/pricing/">
+            See pricing<span class="pill__chev" aria-hidden="true"></span>
+          </a>
+        </div>
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .rx-study {
+    display: grid;
+    gap: 32px;
+  }
+
+  .rx-study__text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .rx-study__title {
+    max-width: 20ch;
+  }
+
+  .rx-study__body {
+    max-width: 52ch;
+  }
+
+  .rx-quote {
+    margin-top: 8px;
+    padding: 0.1em 0.3em;
+    background: var(--t-lemon);
+    font-size: var(--fs-lead);
+    font-weight: 500;
+  }
+
+  .rx-study__cta {
+    margin-top: 12px;
+  }
+
+  .rx-card__label {
+    color: var(--grey-900);
+  }
+
+  .rx-caveat {
+    max-width: 60ch;
+    margin-top: 24px;
+  }
+
+  .rx-other__name {
+    font-size: var(--fs-body);
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+
+  .rx-other__link {
+    margin-top: auto;
+  }
+
+  @media (min-width: 62.5em) {
+    .rx-study {
+      grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
+      gap: 48px;
+      align-items: start;
+    }
+  }
+</style>

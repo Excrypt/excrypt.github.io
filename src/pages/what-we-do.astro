@@ -1,0 +1,176 @@
+---
+/**
+ * The three jobs, in full. The home page's section demonstrates them; this page
+ * spells out what each one actually produces. Job copy comes from
+ * src/data/jobs.ts, which that section reads too.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { site, absoluteUrl } from '../data/site';
+import { jobs } from '../data/jobs';
+import {
+  organizationSchema,
+  webSiteSchema,
+  serviceSchema,
+  breadcrumbSchema,
+} from '../lib/schema';
+
+const description =
+  'The three jobs BriteUX does every month: answer pages for real buyer questions, ' +
+  'structured data a machine can read, and one consistent record everywhere.';
+
+const schemas = [
+  organizationSchema(),
+  webSiteSchema(),
+  serviceSchema(),
+  breadcrumbSchema([
+    { name: 'Home', url: absoluteUrl('/') },
+    { name: 'What we do', url: absoluteUrl('/what-we-do/') },
+  ]),
+];
+
+/* What each job produces. Every line restates a commitment the site already
+   makes in site.ts or the FAQ. */
+const detail: Record<string, { tag: string; tint: string; line: string }[]> = {
+  Answers: [
+    { tag: 'Written', tint: 'var(--t-cream)', line: 'Pages answering the questions your buyers actually ask' },
+    { tag: 'Words', tint: 'var(--t-rose)', line: 'In the words buyers use, not the words the trade uses' },
+    { tag: 'Approval', tint: 'var(--t-lime)', line: 'We write the copy, you approve it' },
+    { tag: 'Yours', tint: 'var(--t-mint)', line: 'On your domain, in your name' },
+  ],
+  Structure: [
+    { tag: 'Facts', tint: 'var(--t-periwinkle)', line: 'Methods, run sizes, minimums and in-hands turnaround, stated plainly' },
+    { tag: 'Schema', tint: 'var(--t-blue)', line: 'Marked up in structured data a machine can read without guessing' },
+    { tag: 'Distributors', tint: 'var(--t-peach)', line: 'What you source and how fast you quote, if that is your side of it' },
+  ],
+  Consistency: [
+    { tag: 'Profile', tint: 'var(--t-blue)', line: 'Your Google Business Profile claimed, corrected and kept current' },
+    { tag: 'Listings', tint: 'var(--t-lemon)', line: 'Site, profile and directories saying the same thing' },
+    { tag: 'Checked', tint: 'var(--t-mint)', line: 'Re-checked every month, not once at signup' },
+  ],
+};
+---
+
+<BaseLayout
+  title="What we do"
+  description={description}
+  path="/what-we-do/"
+  schemas={schemas}
+>
+  <div class="rails">
+    <section class="page-hero">
+      <div class="container page-hero__inner">
+        <p class="label">What we do</p>
+        <h1>Three jobs, <span class="hi">every month</span></h1>
+        <p class="lead page-hero__body">
+          No dashboards, no retainer theatre. These are the things that decide whether you
+          turn up in an answer.
+        </p>
+        <div class="page-hero__cta">
+          <a class="pill pill--primary" href="/contact/">
+            Talk to us<span class="pill__chev" aria-hidden="true"></span>
+          </a>
+          <a class="pill pill--secondary" href="/pricing/">
+            What it costs<span class="pill__chev" aria-hidden="true"></span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    {
+      jobs.map((job, i) => (
+        <section class:list={['page-band', i % 2 === 0 && 'page-band--alt']}>
+          <div class="container">
+            <div class:list={['split', i % 2 === 1 && 'split--flip']}>
+              <div class="wwd__text">
+                <p class="label">{job.label}</p>
+                <h2 class="wwd__title">{job.title}</h2>
+                <p class="muted wwd__body">{job.body}</p>
+              </div>
+
+              <ul class="checklist">
+                {detail[job.label].map((row) => (
+                  <li>
+                    <span class="chip" style={`--tint: ${row.tint}`}>
+                      {row.tag}
+                    </span>
+                    <span>{row.line}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+      ))
+    }
+
+    <section class="page-band page-band--alt">
+      <div class="container">
+        <div class="page-band__head">
+          <h2>What we need from you</h2>
+          <p class="lead">
+            About an hour up front, then roughly thirty minutes a month.
+          </p>
+        </div>
+
+        <ul class="tiles tiles-3">
+          <li class="tile">
+            <p class="label">Up front</p>
+            <p class="muted">
+              One call about the work you actually take: presses, heads, minimums, run
+              sizes and what you will not quote. If you distribute, what you source, who
+              you contract the decorating to, and the accounts you want more of.
+            </p>
+          </li>
+          <li class="tile">
+            <p class="label">Access</p>
+            <p class="muted">
+              Admin access to your accounts. Every account is created under your email
+              with us added as an admin, so you can remove us at any point.
+            </p>
+          </li>
+          <li class="tile">
+            <p class="label">Every month</p>
+            <p class="muted">
+              One call, about thirty minutes, and your approval on the copy. We write it;
+              you tell us where we have the trade wrong.
+            </p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="cta-band">
+      <div class="container cta-band__inner">
+        <h2>One plan. {site.offer.priceDisplay} a month.</h2>
+        <p class="small muted">
+          All three jobs, every month. {site.offer.terms}
+        </p>
+        <div class="cta-band__actions">
+          <a class="pill pill--primary" href="/contact/">
+            Talk to us<span class="pill__chev" aria-hidden="true"></span>
+          </a>
+          <a class="pill pill--secondary" href="/pricing/">
+            See what's included<span class="pill__chev" aria-hidden="true"></span>
+          </a>
+        </div>
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .wwd__text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .wwd__title {
+    max-width: 18ch;
+  }
+
+  .wwd__body {
+    max-width: 52ch;
+  }
+</style>

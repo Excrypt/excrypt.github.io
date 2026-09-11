@@ -1,0 +1,224 @@
+---
+/**
+ * The founders, in full.
+ *
+ * Every claim about the family shop is checkable against Hightech Grafix's own
+ * material — the year, the trade-only model, the two shifts, the methods —
+ * because this page carries two real names, two real faces and links to two
+ * real profiles. Nothing here is invented.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Portrait from '../components/Portrait.astro';
+import portraitBryce from '../assets/portrait-bryce.png';
+import portraitBlaid from '../assets/portrait-blaid.png';
+import { site, absoluteUrl } from '../data/site';
+import {
+  organizationSchema,
+  webSiteSchema,
+  personSchema,
+  breadcrumbSchema,
+} from '../lib/schema';
+
+const portraits = [portraitBryce, portraitBlaid];
+const seeds = [4703, 8821];
+
+const description =
+  `${site.founders.map((f) => f.name).join(' and ')}, brothers whose family has run a ` +
+  `contract-only apparel decorator since ${site.familyShopSince}.`;
+
+const schemas = [
+  organizationSchema(),
+  webSiteSchema(),
+  ...site.founders.map(personSchema),
+  breadcrumbSchema([
+    { name: 'Home', url: absoluteUrl('/') },
+    { name: 'Who we are', url: absoluteUrl('/who-we-are/') },
+  ]),
+];
+
+const commitments = [
+  {
+    label: 'One per market',
+    body:
+      'We take one supplier per metro per specialty, so we are not running two contract ' +
+      'embroiderers — or two distributors chasing the same accounts — against each ' +
+      'other. If someone in your area signs first, we will tell you that instead of ' +
+      'taking your money.',
+  },
+  {
+    label: 'Month to month',
+    body:
+      'Tell us to stop and the next invoice does not go out. There is no contract to get ' +
+      'out of and no cancellation fee, so the only thing keeping you here is whether the ' +
+      'work is worth it.',
+  },
+  {
+    label: 'Nothing we cannot promise',
+    body:
+      'Nobody controls what an AI assistant says, and anyone who guarantees otherwise is ' +
+      'selling something. What we control is whether the answer exists on your site and ' +
+      'whether a machine can read it.',
+  },
+];
+---
+
+<BaseLayout
+  title="Who we are"
+  description={description}
+  path="/who-we-are/"
+  schemas={schemas}
+>
+  <div class="rails">
+    <section class="page-hero">
+      <div class="container page-hero__inner">
+        <p class="label">Who we are</p>
+        <h1>We grew up <span class="hi">around presses</span></h1>
+        <p class="lead page-hero__body">
+          The family shop opened in Arlington in {site.familyShopSince}, contract only —
+          no retail, no walk-ins, nothing that competes with the people it prints for.
+        </p>
+      </div>
+    </section>
+
+    <section class="page-band page-band--alt">
+      <div class="container">
+        <div class="wwa__people">
+          {
+            site.founders.map((founder, i) => (
+              <figure class="wwa__person">
+                <Portrait src={portraits[i]} alt={founder.photoAlt} seed={seeds[i]} />
+                <figcaption class="wwa__meta">
+                  <p class="wwa__name">{founder.name}</p>
+                  <p class="label">{founder.role}</p>
+                  <p class="muted wwa__bio">{founder.bio}</p>
+                  <ul class="wwa__links">
+                    {founder.sameAs.map((url) => (
+                      <li>
+                        <a href={url} rel="noopener">
+                          LinkedIn
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </figcaption>
+              </figure>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="page-band">
+      <div class="container">
+        <div class="page-band__head">
+          <h2>What the shop taught us</h2>
+        </div>
+
+        <div class="prose wwa__story">
+          <p class="muted">
+            It runs two shifts now. Screen print, embroidery and DTF go out the door under
+            somebody else's name, and Blaid still sells for it. So we know what a blown
+            in-hands date costs a distributor, why most jobs go wrong on the receiving
+            dock rather than at the press, and why you will not quote twelve pieces in
+            three colours.
+          </p>
+          <p class="muted">
+            What nobody in that building ever solved was being found. The work that came
+            in came from people who already knew the number. We are not going to explain
+            your business to you. We are going to make sure that when a buyer asks a
+            machine who can do the job, the machine knows your shop exists.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-band page-band--alt">
+      <div class="container">
+        <div class="page-band__head">
+          <h2>How we work</h2>
+        </div>
+
+        <ul class="tiles tiles-3">
+          {
+            commitments.map((c) => (
+              <li class="tile">
+                <p class="label">{c.label}</p>
+                <p class="muted">{c.body}</p>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+
+    <section class="cta-band">
+      <div class="container cta-band__inner">
+        <h2>Talk to the one who sells decoration.</h2>
+        <p class="small muted">
+          Blaid is who you talk to. {site.offer.terms}
+        </p>
+        <div class="cta-band__actions">
+          <a class="pill pill--primary" href="/contact/">
+            Talk to us<span class="pill__chev" aria-hidden="true"></span>
+          </a>
+          <a class="pill pill--secondary" href="/pricing/">
+            See pricing<span class="pill__chev" aria-hidden="true"></span>
+          </a>
+        </div>
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .wwa__people {
+    display: grid;
+    gap: 20px;
+  }
+
+  .wwa__person {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 10px;
+    border: 1px solid var(--rule);
+    background: var(--white);
+  }
+
+  .wwa__meta {
+    display: grid;
+    gap: 4px;
+    align-content: start;
+    flex: 1;
+    padding: 16px 12px 12px;
+  }
+
+  .wwa__name {
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  .wwa__bio {
+    margin-top: 8px;
+  }
+
+  .wwa__links {
+    display: flex;
+    gap: 14px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-small);
+  }
+
+  .wwa__story {
+    max-width: 68ch;
+  }
+
+  @media (min-width: 30rem) {
+    .wwa__people {
+      grid-template-columns: 1fr 1fr;
+      align-items: stretch;
+    }
+  }
+</style>

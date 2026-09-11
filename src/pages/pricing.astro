@@ -1,0 +1,727 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { site, absoluteUrl } from '../data/site';
+import { homeFaq } from '../data/faq';
+import {
+  organizationSchema,
+  webSiteSchema,
+  serviceSchema,
+  breadcrumbSchema,
+} from '../lib/schema';
+
+const { offer } = site;
+
+const description =
+  `${site.name} is one plan at ${offer.priceDisplay} a month: an audit, a website if ` +
+  `you need one, your Google Business Profile, answer pages and a monthly report. ` +
+  `${offer.terms}`;
+
+const schemas = [
+  organizationSchema(),
+  webSiteSchema(),
+  serviceSchema(),
+  breadcrumbSchema([
+    { name: 'Home', url: absoluteUrl('/') },
+    { name: 'Pricing', url: absoluteUrl('/pricing/') },
+  ]),
+];
+
+/* Laid out after the reference's pricing page, section for section. It sells
+   four tiers; we sell one plan, so the four cards are the four parts of that
+   plan rather than four prices. Every line below restates something the site
+   already commits to in site.ts or the FAQ — this page adds detail, not new
+   promises. Tints are the reference's chip set. */
+type Row = { tag: string; tint: string; line: string };
+type Card = {
+  title: string;
+  when: string;
+  badge?: string;
+  body: string;
+  groups: { label: string; rows: Row[] }[];
+};
+
+const cards: Card[] = [
+  {
+    title: 'The audit',
+    when: 'Month one',
+    badge: 'Starts here',
+    body: 'What Google and the AI assistants say about your shop today, in writing.',
+    groups: [
+      {
+        label: 'Checks',
+        rows: [
+          { tag: 'Google', tint: 'var(--t-periwinkle)', line: 'How you show up in search' },
+          { tag: 'AI', tint: 'var(--t-rose)', line: 'What the assistants say about you' },
+          { tag: 'Details', tint: 'var(--t-blue)', line: 'Whether your facts match everywhere' },
+        ],
+      },
+      {
+        label: 'You get',
+        rows: [
+          { tag: 'Written', tint: 'var(--t-cream)', line: 'A plain report, yours to keep' },
+        ],
+      },
+    ],
+  },
+  {
+    title: 'The website',
+    when: 'Included',
+    body: 'A website, if you need one — built and maintained, not rented.',
+    groups: [
+      {
+        label: 'The work',
+        rows: [
+          { tag: 'Built', tint: 'var(--t-mint)', line: 'Written and built by us' },
+          { tag: 'Kept', tint: 'var(--t-periwinkle)', line: 'Maintained every month' },
+        ],
+      },
+      {
+        label: 'Ownership',
+        rows: [
+          { tag: 'Domain', tint: 'var(--t-lime)', line: 'Registered in your name' },
+          { tag: 'Hosting', tint: 'var(--t-lemon)', line: 'Billed to you directly, at cost' },
+          { tag: 'Exit', tint: 'var(--t-magenta)', line: 'The site stays up if you leave' },
+        ],
+      },
+    ],
+  },
+  {
+    title: 'Business Profile',
+    when: 'Included',
+    body: 'Your Google Business Profile claimed, corrected and kept current.',
+    groups: [
+      {
+        label: 'The work',
+        rows: [
+          { tag: 'Claimed', tint: 'var(--t-blue)', line: 'Under your email, not ours' },
+          { tag: 'Fixed', tint: 'var(--t-rose)', line: 'Details corrected and consistent' },
+          { tag: 'Current', tint: 'var(--t-mint)', line: 'Kept up to date every month' },
+        ],
+      },
+      {
+        label: 'Ownership',
+        rows: [
+          { tag: 'Admin', tint: 'var(--t-peach)', line: 'We are an admin you can remove' },
+        ],
+      },
+    ],
+  },
+  {
+    title: 'Answers + reporting',
+    when: 'Every month',
+    body: 'Answer pages for the questions your buyers ask, and a plain report of what moved.',
+    groups: [
+      {
+        label: 'The work',
+        rows: [
+          { tag: 'Answers', tint: 'var(--t-cream)', line: 'Written for real buyer questions' },
+          { tag: 'Readable', tint: 'var(--t-periwinkle)', line: 'Structured so a machine can read them' },
+          { tag: 'Approval', tint: 'var(--t-lime)', line: 'We write the copy, you approve it' },
+        ],
+      },
+      {
+        label: 'Every month',
+        rows: [
+          { tag: 'Call', tint: 'var(--t-blue)', line: 'One call, about thirty minutes' },
+          { tag: 'Report', tint: 'var(--t-mint)', line: 'What changed and what came in' },
+        ],
+      },
+    ],
+  },
+];
+
+/* The comparison table. The reference compares tiers across columns; with one
+   plan the useful columns are what the $1,500 covers and what you keep. */
+type Cell = true | false | string;
+const table: { group: string; rows: { item: string; plan: Cell; owned: Cell }[] }[] = [
+  {
+    group: 'The work',
+    rows: [
+      { item: 'Audit of Google and AI assistants', plan: true, owned: 'The written report' },
+      { item: 'Website, if you need one', plan: 'Built and maintained', owned: true },
+      { item: 'Google Business Profile', plan: 'Claimed, corrected, kept current', owned: true },
+      { item: 'Answer pages', plan: true, owned: true },
+      { item: 'Monthly call and report', plan: true, owned: false },
+    ],
+  },
+  {
+    group: 'The terms',
+    rows: [
+      { item: 'Hosting', plan: 'At cost, billed to you', owned: true },
+      { item: 'Domain registration', plan: 'At cost, billed to you', owned: true },
+      { item: 'Contract', plan: 'None — month to month', owned: false },
+      { item: 'Setup fee', plan: 'None', owned: false },
+      { item: 'Competitors in your market', plan: 'One supplier per metro per specialty', owned: false },
+    ],
+  },
+];
+
+const commitments = [
+  { text: 'Tell us to stop and the next invoice does not go out.', label: 'Month to month' },
+  {
+    text: 'If three or four months go by and the report is empty, we tell you before you ask.',
+    label: 'Plain reporting',
+  },
+  {
+    text: 'Nobody controls what an AI assistant says. We control whether the answer exists on your site.',
+    label: 'No false promises',
+  },
+  { text: 'One supplier per metro per specialty. We will not run you against a rival.', label: 'One per market' },
+];
+---
+
+<BaseLayout
+  title="Pricing"
+  description={description}
+  path="/pricing/"
+  schemas={schemas}
+>
+  <div class="rails">
+    {/* 1. Plan hero */}
+    <section class="pp-hero">
+      <div class="container">
+        <h1>One plan. {offer.priceDisplay} a month.</h1>
+        <p class="pp-hero__sub muted">
+          Everything below is in it. No setup fee. {offer.terms}
+        </p>
+
+        <div class="pp-cards">
+          {
+            cards.map((card) => (
+              <article class="pp-card">
+                {card.badge && <span class="pp-card__badge">{card.badge}</span>}
+                <header>
+                  <h2 class="pp-card__title">{card.title}</h2>
+                  <p class="pp-card__when">{card.when}</p>
+                </header>
+                <p class="pp-card__body">{card.body}</p>
+
+                {card.groups.map((g) => (
+                  <div class="pp-card__group">
+                    <p class="pp-eyebrow">{g.label}</p>
+                    <ul class="pp-rows">
+                      {g.rows.map((r) => (
+                        <li>
+                          <span class="pp-chip" style={`--tint: ${r.tint}`}>
+                            {r.tag}
+                          </span>
+                          <span>{r.line}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+
+                <a class="pill pill--primary pp-card__cta" href="/contact/">
+                  Talk to us<span class="pill__chev" aria-hidden="true" />
+                </a>
+              </article>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    {/* 2. Pull line */}
+    <section class="pp-quote">
+      <div class="container">
+        <p class="pp-quote__text">
+          <span class="pp-quote__mark">You own the domain, the profile and every account. We
+          are an admin you can remove.</span>
+        </p>
+        <p class="pp-quote__by">In writing, on the first invoice</p>
+      </div>
+    </section>
+
+    {/* 3. Comparison table */}
+    <section class="pp-table-wrap">
+      <div class="container">
+        <div class="pp-table__scroll">
+          <table class="pp-table">
+            <caption class="visually-hidden">What {offer.priceDisplay} a month covers</caption>
+            <thead>
+              <tr>
+                <th scope="col" class="pp-table__title">What {offer.priceDisplay} covers</th>
+                <th scope="col"><span class="pp-table__col">In the plan</span></th>
+                <th scope="col"><span class="pp-table__col">Yours to keep</span></th>
+              </tr>
+            </thead>
+            {
+              table.map((g) => (
+                <tbody>
+                  <tr>
+                    <th scope="rowgroup" colspan="3" class="pp-table__group">
+                      {g.group}
+                    </th>
+                  </tr>
+                  {g.rows.map((r) => (
+                    <tr>
+                      <th scope="row">{r.item}</th>
+                      {[r.plan, r.owned].map((c) => (
+                        <td>
+                          {c === true ? (
+                            <span class="pp-tick" role="img" aria-label="Yes" />
+                          ) : c === false ? (
+                            <span class="pp-dash" role="img" aria-label="No">
+                              —
+                            </span>
+                          ) : (
+                            c
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              ))
+            }
+          </table>
+        </div>
+      </div>
+    </section>
+
+    {/* 4. Text block */}
+    <section class="pp-text">
+      <div class="container">
+        <h2>Not sure it fits your shop?</h2>
+        <p class="muted pp-text__body">
+          It takes about an hour up front and roughly thirty minutes a month after that. We
+          write the copy and you approve it.
+        </p>
+        <a class="pill pill--ghost" href="/contact/">
+          Talk to us<span class="pill__chev" aria-hidden="true"></span>
+        </a>
+      </div>
+    </section>
+
+    {/* 5. Commitments, where the reference runs customer quotes */}
+    <section class="pp-multi">
+      <div class="container">
+        <div class="pp-multi__grid">
+          {
+            commitments.map((c) => (
+              <figure class="pp-multi__card">
+                <blockquote>“{c.text}”</blockquote>
+                <figcaption class="pp-eyebrow">{c.label}</figcaption>
+              </figure>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    {/* 6. CTA band */}
+    <section class="pp-cta">
+      <div class="container pp-cta__inner">
+        <h2>Your first month is the audit.</h2>
+        <p class="small muted pp-cta__sub">
+          What Google and the assistants say about your shop,<br />
+          in writing. {offer.terms}
+        </p>
+        <div class="pp-cta__actions">
+          <a class="pill pill--primary" href="/contact/">
+            Talk to us<span class="pill__chev" aria-hidden="true"></span>
+          </a>
+          <a class="pill pill--secondary" href="/questions/">
+            Read the questions<span class="pill__chev" aria-hidden="true"></span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    {/* 7. FAQs — the home page's questions; the FAQPage schema stays on the home
+        page so the same questions are not marked up twice. */}
+    <section class="pp-faq">
+      <div class="container pp-faq__inner">
+        <h2>FAQs</h2>
+        <div class="pp-faq__list">
+          {
+            homeFaq.map((entry) => (
+              <details class="pp-faq__item">
+                <summary>
+                  <span>{entry.question}</span>
+                  <span class="pp-faq__chev" aria-hidden="true" />
+                </summary>
+                <p class="muted">{entry.answer}</p>
+              </details>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  /* Every band here is a full-width sheet with a hairline between it and the
+     next, like the reference. */
+  section {
+    position: relative;
+    z-index: 1;
+    padding-block: var(--space-section);
+  }
+
+  section + section {
+    border-top: 1px solid var(--rule);
+  }
+
+  .pp-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--grey-600);
+  }
+
+  /* 1. Hero ----------------------------------------------------------------- */
+
+  .pp-hero {
+    background: var(--white);
+    padding-top: 56px;
+  }
+
+  .pp-hero__sub {
+    margin-top: 12px;
+    max-width: 56ch;
+  }
+
+  .pp-cards {
+    display: grid;
+    gap: 16px;
+    margin-top: 40px;
+  }
+
+  .pp-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 28px 24px 24px;
+    background: var(--white);
+  }
+
+  .pp-card__badge {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 2px 8px;
+    background: var(--black);
+    color: var(--white);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .pp-card__title,
+  .pp-card__when {
+    font-size: var(--fs-card);
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+
+  .pp-card__when {
+    color: var(--grey-600);
+    font-weight: 500;
+  }
+
+  .pp-card__body {
+    margin-top: 16px;
+  }
+
+  .pp-card__group {
+    margin-top: 28px;
+  }
+
+  .pp-card__group .pp-eyebrow {
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .pp-rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .pp-rows li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: 0.9375rem;
+    line-height: 1.35;
+  }
+
+  .pp-chip {
+    flex: 0 0 auto;
+    padding: 0 0.25em;
+    background: var(--tint, var(--t-periwinkle));
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+
+  .pp-card__cta {
+    width: 100%;
+    margin-top: auto;
+  }
+
+  /* Space above the button without collapsing the auto margin that pins it to
+     the card's foot. */
+  .pp-card__group:last-of-type {
+    margin-bottom: 32px;
+  }
+
+  /* 2. Pull line ------------------------------------------------------------ */
+
+  .pp-quote {
+    text-align: center;
+    padding-block: calc(var(--space-section) * 1.1);
+  }
+
+  .pp-quote__text {
+    max-width: 30ch;
+    margin-inline: auto;
+    font-size: clamp(1.375rem, 1rem + 1.6vw, 2.25rem);
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: -0.015em;
+  }
+
+  .pp-quote__mark {
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    padding: 0.02em 0.3em 0.1em;
+    background: var(--t-magenta);
+  }
+
+  .pp-quote__by {
+    margin-top: 28px;
+    font-size: var(--fs-small);
+  }
+
+  /* 3. Table ---------------------------------------------------------------- */
+
+  .pp-table__scroll {
+    overflow-x: auto;
+    background: var(--white);
+  }
+
+  .pp-table {
+    width: 100%;
+    min-width: 620px;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.9375rem;
+  }
+
+  .pp-table th,
+  .pp-table td {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--rule);
+    font-weight: 400;
+    vertical-align: top;
+  }
+
+  .pp-table thead th {
+    vertical-align: middle;
+  }
+
+  /* Fixed layout so the two data columns split evenly instead of sizing to
+     whichever holds the longest string. */
+  .pp-table {
+    table-layout: fixed;
+  }
+
+  .pp-table thead th:first-child {
+    width: 40%;
+  }
+
+  .pp-table__title {
+    font-size: var(--fs-h3);
+    font-weight: 600 !important;
+  }
+
+  .pp-table__col {
+    display: inline-block;
+    padding: 6px 14px;
+    background: var(--black);
+    color: var(--white);
+    border-radius: var(--r-full);
+    font-size: var(--fs-small);
+    font-weight: 500;
+  }
+
+  .pp-table__group {
+    padding-top: 28px !important;
+    font-size: var(--fs-h3);
+    font-weight: 600 !important;
+  }
+
+  /* A circled tick, drawn: a ring, and a short L rotated inside it. */
+  .pp-tick {
+    position: relative;
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid var(--black);
+    border-radius: 50%;
+    vertical-align: -3px;
+  }
+
+  .pp-tick::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 2.5px;
+    width: 4px;
+    height: 8px;
+    border-right: 1.5px solid var(--black);
+    border-bottom: 1.5px solid var(--black);
+    transform: rotate(45deg);
+  }
+
+  .pp-dash {
+    color: var(--grey-500);
+  }
+
+  /* 4. Text block ----------------------------------------------------------- */
+
+  .pp-text__body {
+    max-width: 60ch;
+    margin: 14px 0 24px;
+  }
+
+  /* 5. Commitments ---------------------------------------------------------- */
+
+  .pp-multi__grid {
+    display: grid;
+    gap: 16px;
+  }
+
+  .pp-multi__card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 40px;
+    min-height: 200px;
+    margin: 0;
+    padding: 24px;
+    border: 1px solid var(--rule);
+    background: var(--white);
+  }
+
+  .pp-multi__card blockquote {
+    margin: 0;
+    color: var(--grey-700);
+  }
+
+  /* 6. CTA band ------------------------------------------------------------- */
+
+  .pp-cta {
+    background: var(--white);
+  }
+
+  .pp-cta__inner {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .pp-cta__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* 7. FAQs ----------------------------------------------------------------- */
+
+  .pp-faq__inner {
+    display: grid;
+    gap: 24px;
+  }
+
+  .pp-faq__item {
+    border-top: 1px solid var(--rule);
+  }
+
+  .pp-faq__item:last-child {
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .pp-faq__item summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    padding: 18px 0;
+    font-weight: 500;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .pp-faq__item summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .pp-faq__chev {
+    flex: 0 0 auto;
+    width: 8px;
+    height: 8px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: translateY(-2px) rotate(45deg);
+    transition: transform 200ms cubic-bezier(0.3, 0, 0.15, 1);
+  }
+
+  .pp-faq__item[open] .pp-faq__chev {
+    transform: translateY(2px) rotate(-135deg);
+  }
+
+  .pp-faq__item p {
+    max-width: 68ch;
+    padding-bottom: 20px;
+  }
+
+  @media (min-width: 48rem) {
+    .pp-hero {
+      padding-top: 80px;
+    }
+
+    .pp-cards,
+    .pp-multi__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .pp-cta__inner {
+      flex-direction: row;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .pp-cta__inner h2 {
+      max-width: 16ch;
+    }
+
+    .pp-cta__actions {
+      margin-left: auto;
+    }
+
+    .pp-faq__inner {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+      gap: 48px;
+    }
+  }
+
+  @media (min-width: 75rem) {
+    .pp-cards,
+    .pp-multi__grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+</style>

@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Contact from '../components/sections/Contact.astro';
+import Schedule from '../components/sections/Schedule.astro';
 import { site, absoluteUrl } from '../data/site';
 import {
   organizationSchema,
@@ -10,8 +10,8 @@ import {
 } from '../lib/schema';
 
 const description =
-  `Talk to ${site.name} about getting your shop found in Google and in AI ` +
-  `assistants. Call ${site.phone.display}, email ${site.email}, or send a message.`;
+  `Book a thirty-minute meeting with ${site.name} about getting your shop found in ` +
+  `Google and in AI assistants. No obligation, and nothing to prepare.`;
 
 const schemas = [
   organizationSchema(),
@@ -19,13 +19,19 @@ const schemas = [
   localBusinessSchema(),
   breadcrumbSchema([
     { name: 'Home', url: absoluteUrl('/') },
-    { name: 'Contact', url: absoluteUrl('/contact/') },
+    { name: 'Talk to us', url: absoluteUrl('/contact/') },
   ]),
 ];
 ---
 
-<BaseLayout title="Contact" description={description} path="/contact/" schemas={schemas}>
+<BaseLayout
+  title="Talk to us"
+  description={description}
+  path="/contact/"
+  schemas={schemas}
+  ground="grey"
+>
   <div class="rails">
-    <Contact />
+    <Schedule />
   </div>
 </BaseLayout>

@@ -1,0 +1,701 @@
+---
+/**
+ * The read-more page for the home page's research section: G2's 2026 "Answer
+ * Economy" study, summarised.
+ *
+ * It is a SUMMARY, not a copy. The report is G2's and sits behind a form on
+ * their site; this page restates its findings in our own words, carries its
+ * figures (which G2 publishes openly), quotes one line, and links to the source
+ * at every turn. The reading of it for print shops — and its limits — are ours
+ * and are labelled as ours.
+ *
+ * Built to the reference's grammar rather than as a plain article: a ruled
+ * header, the four pastel stat blocks, a ruled definition list for the method,
+ * and each finding as a row on the 12-column grid — number and title in the
+ * first four columns, prose and a square-bulleted mono list in the last eight.
+ *
+ * Every number is from `src/data/research.ts`, which the home section shares.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import GridBand from '../../components/GridBand.astro';
+import DitherCanvas from '../../components/DitherCanvas.astro';
+import { site, absoluteUrl } from '../../data/site';
+import { answerEconomy as study } from '../../data/research';
+import {
+  articleSchema,
+  breadcrumbSchema,
+  organizationSchema,
+  webSiteSchema,
+  personSchema,
+  type SchemaNode,
+} from '../../lib/schema';
+
+const title = 'Half of business buyers now ask AI before they search';
+const description =
+  "What G2's 2026 Answer Economy study of 1,076 business buyers found about AI " +
+  'chatbots, shortlists and trust, and what it means for a print shop.';
+
+const url = absoluteUrl(study.path);
+const author = site.founders[0];
+const published = new Date('2026-09-11T00:00:00Z');
+
+const fmt = (d: Date) =>
+  d.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+
+const headlineCards = [
+  { value: '51%', label: 'Start with AI more often than Google', tint: 'pink' },
+  { value: '69%', label: 'Chose a different vendor than planned', tint: 'grey' },
+  { value: '85%', label: 'Think more of a vendor the AI names', tint: 'cream' },
+  { value: '1 in 3', label: 'Bought from a vendor they did not know', tint: 'blue' },
+];
+
+const method = [
+  { term: 'Publisher', detail: `${study.publisher}` },
+  { term: 'Led by', detail: `${study.lead}, ${study.leadRole}` },
+  { term: 'Published', detail: fmt(study.published) },
+  { term: 'Fieldwork', detail: study.fieldwork },
+  { term: 'Sample', detail: study.sample },
+  { term: 'Regions', detail: study.regions },
+  { term: 'Also', detail: study.interviews },
+];
+
+const allSources = [
+  ...study.sources,
+  ...study.others.map((o) => ({ label: o.name, url: o.url })),
+];
+
+const schemas: SchemaNode[] = [
+  organizationSchema(),
+  webSiteSchema(),
+  personSchema(author),
+  breadcrumbSchema([
+    { name: 'Home', url: absoluteUrl('/') },
+    { name: 'Research', url: absoluteUrl('/#research') },
+    { name: title, url },
+  ]),
+  {
+    ...articleSchema({
+      headline: title,
+      description,
+      url,
+      datePublished: published.toISOString(),
+      authorName: author.name,
+    }),
+    // The study this page summarises, as a citation rather than as our own work.
+    citation: {
+      '@type': 'Report',
+      name: study.reportTitle,
+      author: { '@type': 'Organization', name: study.publisher },
+      datePublished: iso(study.published),
+      url: study.sources[0].url,
+    },
+  },
+];
+---
+
+<BaseLayout title={title} description={description} path={study.path} ogType="article" schemas={schemas}>
+  <div class="rails">
+    <article>
+      <header class="section st-head">
+        <div class="container">
+          <nav class="st-crumb" aria-label="Breadcrumb">
+            <a class="label" href="/research/">Research</a>
+            <span class="label" aria-hidden="true">/</span>
+            <span class="label">{study.publisher}, {study.published.getUTCFullYear()}</span>
+          </nav>
+
+          <h1 class="st-title">
+            <span class="mark mark--periwinkle">{title}</span>
+          </h1>
+
+          <p class="st-lead">
+            In {study.publisher}'s {study.fieldwork} survey of {study.sampleSize} B2B software
+            buyers, 51% said they start research with an AI chatbot more often than with
+            Google — up from 29% a year earlier. And the answer does not just start the
+            search: 69% ended up with a different vendor than they had planned.
+          </p>
+
+          <p class="small muted st-byline">
+            Summary by {author.name}, {author.role.toLowerCase()} of {site.name}. Published
+            <time datetime={iso(published)}>{fmt(published)}</time>. The study and its figures
+            are {study.publisher}'s; the reading of it for print shops is ours.
+          </p>
+
+          <ul class="st-cards">
+            {
+              headlineCards.map((card) => (
+                <li class="st-card" data-tint={card.tint}>
+                  <p class="st-card__num">{card.value}</p>
+                  <p class="label st-card__label">{card.label}</p>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </header>
+
+      <GridBand
+        blocks={[
+          { m: 1, spanM: 2, t: 1, spanT: 2, d: 2, spanD: 3, tone: 'sky' },
+          { m: 4, t: 6, d: 9, tone: 'accent', edge: 'bottom' },
+        ]}
+      />
+
+      <section class="section st-block" aria-labelledby="st-method">
+        <div class="container st-row">
+          <div class="st-row__side">
+            <h2 id="st-method" class="st-h2">About the study</h2>
+          </div>
+          <div class="st-row__main">
+            <dl class="st-method">
+              {
+                method.map((m) => (
+                  <div class="st-method__row">
+                    <dt class="label">{m.term}</dt>
+                    <dd>{m.detail}</dd>
+                  </div>
+                ))
+              }
+            </dl>
+
+            <figure class="st-quote">
+              <div class="st-quote__art" aria-hidden="true">
+                <DitherCanvas variant="field" tone="periwinkle" cell={4} seed={3311} />
+              </div>
+              <blockquote class="st-quote__text">
+                <p>“{study.quote}”</p>
+              </blockquote>
+              <figcaption class="label st-quote__who">
+                {study.lead}, {study.leadRole}
+              </figcaption>
+            </figure>
+
+            <p class="muted st-note">
+              The full report is behind a form on <a href={study.sources[0].url} rel="noopener"
+                >{study.publisher}'s site</a
+              >. Every figure on this page appears in {study.publisher}'s public release or on
+              the report's own page.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section st-block" aria-labelledby="st-findings">
+        <div class="container">
+          <h2 id="st-findings" class="st-h2 st-findings__head">What they found</h2>
+
+          <ol class="st-findings">
+            {
+              study.findings.map((f, i) => (
+                <li class="st-row st-finding">
+                  <div class="st-row__side">
+                    <p class="label st-finding__n">{String(i + 1).padStart(2, '0')}</p>
+                    <h3 class="st-finding__title">{f.title}</h3>
+                  </div>
+                  <div class="st-row__main">
+                    <p class="st-finding__body">{f.body}</p>
+                    <ul class="st-stats">
+                      {f.stats.map((s) => (
+                        <li>
+                          <span class="st-stats__num">{s.value}</span>
+                          <span class="st-stats__label">{s.label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </li>
+              ))
+            }
+          </ol>
+        </div>
+      </section>
+
+      <section class="section st-block" aria-labelledby="st-others">
+        <div class="container st-row">
+          <div class="st-row__side">
+            <h2 id="st-others" class="st-h2">Other studies agree</h2>
+          </div>
+          <div class="st-row__main">
+            <ul class="st-others">
+              {
+                study.others.map((o) => (
+                  <li class="st-other">
+                    <p class="st-other__name">
+                      <a href={o.url} rel="noopener">{o.name}</a>
+                    </p>
+                    <p class="small muted">{o.detail}</p>
+                    <p class="st-other__finding">{o.finding}</p>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section st-block" aria-labelledby="st-shops">
+        <div class="container st-row">
+          <div class="st-row__side">
+            <h2 id="st-shops" class="st-h2">
+              <span class="mark mark--highlight">What it means for a print shop</span>
+            </h2>
+          </div>
+          <div class="st-row__main st-prose">
+            <p>
+              A distributor sourcing 300 hoodies, or a school's purchasing office pricing
+              team shirts, is not buying software. But these numbers describe how a person at
+              a work laptop now does research, and it is the same person doing the sourcing.
+            </p>
+            <p>
+              If the answer writes the shortlist, a shop that is not in the answer is not on
+              the shortlist. There is no page two to be found on.
+            </p>
+            <p>
+              The answers are often wrong, and buyers know it, so they check. What a model
+              can read about your shop has to be accurate and has to agree with itself: your
+              own site stating methods, minimums and turnaround plainly, and profiles and
+              reviews elsewhere that say the same thing.
+            </p>
+            <p>That is the work we do.</p>
+
+            <div class="st-actions">
+              <a class="pill pill--primary" href="/contact/">
+                Talk to us<span class="pill__chev" aria-hidden="true"></span>
+              </a>
+              <a class="pill pill--ghost" href="/what-we-do/">What {site.name} does</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section st-block" aria-labelledby="st-limits">
+        <div class="container st-row">
+          <div class="st-row__side">
+            <h2 id="st-limits" class="st-h2">Read it with care</h2>
+          </div>
+          <div class="st-row__main">
+            <ul class="st-list">
+              <li>{study.publisher} surveyed buyers of software, not buyers of printed goods.</li>
+              <li>
+                {study.publisher} runs a review site, and the report's advice leans toward
+                reviews. The review-trust figures are still the buyers' own answers; read them
+                knowing who asked.
+              </li>
+              <li>
+                The figures are self-reported survey answers. {study.publisher} says it used
+                generative AI to help design the survey and analyse the results.
+              </li>
+            </ul>
+
+            <h3 class="st-sources__head">Sources</h3>
+            <ul class="st-sources">
+              {
+                allSources.map((s) => (
+                  <li>
+                    <a href={s.url} rel="noopener">
+                      {s.label}
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+        </div>
+      </section>
+    </article>
+  </div>
+</BaseLayout>
+
+<style>
+  /* ---------- header ---------- */
+
+  .st-head {
+    padding-bottom: 56px;
+  }
+
+  .st-crumb {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .st-crumb a {
+    text-decoration: none;
+  }
+
+  .st-crumb a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+  }
+
+  .st-title {
+    max-width: 22ch;
+    margin-top: 24px;
+    font-size: clamp(2rem, 1.1rem + 3.6vw, 4rem);
+    line-height: 1.22;
+    letter-spacing: -0.025em;
+  }
+
+  .st-title .mark {
+    padding: 0.02em 0.16em 0.08em;
+  }
+
+  .st-lead {
+    max-width: 60ch;
+    margin-top: 28px;
+    color: var(--grey-800);
+    font-size: var(--fs-hero-sub);
+    line-height: 1.55;
+  }
+
+  .st-byline {
+    max-width: 70ch;
+    margin-top: 18px;
+  }
+
+  .st-cards {
+    display: grid;
+    gap: 6px;
+    margin: 44px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .st-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 22px;
+    min-height: 140px;
+    padding: 24px 22px 22px;
+    background: var(--card-ground);
+  }
+
+  .st-card[data-tint='pink'] {
+    --card-ground: var(--t-pink);
+  }
+
+  .st-card[data-tint='grey'] {
+    --card-ground: var(--t-periwinkle);
+  }
+
+  .st-card[data-tint='cream'] {
+    --card-ground: var(--t-cream);
+  }
+
+  .st-card[data-tint='blue'] {
+    --card-ground: var(--t-blue);
+  }
+
+  .st-card__num {
+    font-size: clamp(2.25rem, 1.8rem + 1.6vw, 3rem);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.035em;
+  }
+
+  .st-card__label {
+    color: var(--grey-900);
+    letter-spacing: 0.12em;
+    line-height: 1.45;
+  }
+
+  /* ---------- rows on the 12-column grid ---------- */
+
+  .st-block + .st-block {
+    border-top: 1px solid var(--rule);
+  }
+
+  .st-row {
+    display: grid;
+    gap: 24px;
+  }
+
+  .st-h2 {
+    font-size: var(--fs-h2);
+    line-height: 1.15;
+  }
+
+  .st-h2 .mark {
+    padding: 0.02em 0.16em 0.08em;
+  }
+
+  /* ---------- method ---------- */
+
+  .st-method {
+    margin: 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  .st-method__row {
+    display: grid;
+    gap: 6px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .st-method dt {
+    color: var(--grey-700);
+  }
+
+  .st-method dd {
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .st-quote {
+    position: relative;
+    margin: 40px 0 0;
+    padding: 36px 28px 30px;
+    overflow: hidden;
+  }
+
+  .st-quote__art {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* Opaque enough that the drifting field under it cannot move the contrast. */
+  .st-quote__text,
+  .st-quote__who {
+    position: relative;
+    z-index: 1;
+  }
+
+  .st-quote__text {
+    margin: 0;
+  }
+
+  .st-quote__text p {
+    display: inline;
+    padding: 0.06em 0.2em;
+    background: var(--white);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    font-size: clamp(1.375rem, 1rem + 1.4vw, 2rem);
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: -0.015em;
+  }
+
+  .st-quote__who {
+    display: inline-block;
+    margin-top: 18px;
+    padding: 4px 8px;
+    background: var(--white);
+    color: var(--grey-900);
+  }
+
+  .st-note {
+    max-width: 60ch;
+    margin-top: 24px;
+    line-height: 1.55;
+  }
+
+  /* ---------- findings ---------- */
+
+  .st-findings__head {
+    margin-bottom: 36px;
+  }
+
+  .st-findings {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .st-finding {
+    padding: 32px 0 36px;
+    border-top: 2px solid var(--rule);
+  }
+
+  .st-finding__n {
+    color: var(--grey-700);
+  }
+
+  .st-finding__title {
+    margin-top: 10px;
+    font-size: var(--fs-card);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+
+  .st-finding__body {
+    max-width: 62ch;
+    color: var(--grey-800);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+  }
+
+  .st-stats {
+    display: grid;
+    gap: 6px;
+    margin: 24px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .st-stats li {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    gap: 16px;
+    align-items: baseline;
+    padding: 14px 16px;
+    background: var(--t-periwinkle);
+  }
+
+  .st-stats__num {
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .st-stats__label {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    letter-spacing: 0.02em;
+    line-height: 1.45;
+  }
+
+  /* ---------- other studies, prose, limits ---------- */
+
+  .st-others {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .st-other {
+    display: grid;
+    gap: 8px;
+    padding: 24px 22px;
+    border: 1px solid var(--rule);
+  }
+
+  .st-other__name {
+    font-weight: 600;
+  }
+
+  .st-other__finding {
+    margin-top: 6px;
+    line-height: 1.55;
+  }
+
+  .st-prose {
+    display: grid;
+    gap: 18px;
+    max-width: 62ch;
+    color: var(--grey-800);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+  }
+
+  .st-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .st-list,
+  .st-sources {
+    display: grid;
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .st-list li {
+    display: grid;
+    grid-template-columns: 14px minmax(0, 1fr);
+    gap: 14px;
+    max-width: 64ch;
+    line-height: 1.55;
+  }
+
+  .st-list li::before {
+    content: '';
+    width: 14px;
+    height: 14px;
+    margin-top: 0.3em;
+    background: var(--t-blue);
+  }
+
+  .st-sources__head {
+    margin-top: 44px;
+    font-size: var(--fs-h3);
+  }
+
+  .st-sources {
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .st-sources a {
+    line-height: 1.5;
+  }
+
+  /* ---------- breakpoints ---------- */
+
+  @media (min-width: 30rem) {
+    .st-cards {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (min-width: 48rem) {
+    .st-method__row {
+      grid-template-columns: 9rem minmax(0, 1fr);
+      gap: 20px;
+    }
+
+    .st-stats {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .st-stats li {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+      align-content: start;
+      padding: 20px 20px 22px;
+    }
+
+    .st-stats__num {
+      font-size: 2rem;
+    }
+
+    .st-others {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (min-width: 62.5em) {
+    .st-cards {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .st-row {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: 24px;
+    }
+
+    .st-row__side {
+      grid-column: 1 / span 4;
+    }
+
+    .st-row__main {
+      grid-column: 5 / span 8;
+    }
+  }
+</style>

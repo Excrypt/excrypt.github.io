@@ -1,0 +1,417 @@
+---
+/**
+ * The meeting scheduler.
+ *
+ * NOT CONNECTED TO ANYTHING. There is no calendar behind this and no endpoint:
+ * picking a day and a time and pressing the button only changes what is on
+ * screen. The page says so in plain words rather than hiding it, because a
+ * booking form that silently drops a request is worse than no form at all.
+ * When a real calendar is wired up, replace the confirmation branch in the
+ * script below and the note under the form.
+ *
+ * THE MONTH IS BUILT AT BUILD TIME. This is a static site, so the grid shows
+ * the month the site was built in and greys out days before the build date. It
+ * is a placeholder view of a real scheduler, not a working one.
+ */
+import { site } from '../../data/site';
+
+const now = new Date();
+const year = now.getFullYear();
+const month = now.getMonth();
+const monthLabel = now.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+
+/** Monday-first, which is how every scheduler lays a month out. */
+const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7;
+const daysInMonth = new Date(year, month + 1, 0).getDate();
+const today = now.getDate();
+
+const days = Array.from({ length: daysInMonth }, (_, i) => {
+  const date = i + 1;
+  const weekday = new Date(year, month, date).getDay();
+  const weekend = weekday === 0 || weekday === 6;
+  return {
+    date,
+    weekend,
+    past: date < today,
+    label: new Date(year, month, date).toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+    }),
+  };
+});
+
+const weekdayHeads = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+const slots = [
+  '9:00 am',
+  '9:30 am',
+  '10:00 am',
+  '10:30 am',
+  '11:00 am',
+  '11:30 am',
+  '1:00 pm',
+  '1:30 pm',
+  '2:00 pm',
+  '2:30 pm',
+  '3:00 pm',
+  '3:30 pm',
+];
+---
+
+<section class="section" id="book">
+  <div class="container">
+    <div class="sch__head">
+      <h1>Talk to us</h1>
+      <p class="lead sch__lead">
+        Thirty minutes with one of us — Blaid sells contract decoration for a living, so
+        you will not be explaining your own trade to a stranger.
+      </p>
+    </div>
+
+    <div class="sch">
+      <aside class="sch__detail">
+        <p class="label">The meeting</p>
+        <ul class="checklist sch__facts">
+          <li><span class="chip" style="--tint: var(--t-periwinkle)">Length</span><span>30 minutes</span></li>
+          <li><span class="chip" style="--tint: var(--t-blue)">Format</span><span>Video call</span></li>
+          <li><span class="chip" style="--tint: var(--t-mint)">Who</span><span>One of the two founders</span></li>
+          <li><span class="chip" style="--tint: var(--t-cream)">Cost</span><span>Nothing, and no obligation</span></li>
+        </ul>
+
+        <p class="small muted sch__note">
+          Bring what you run: presses, heads, minimums, run sizes and what you will not
+          quote. If you distribute, what you source and who decorates it.
+        </p>
+
+        <p class="small muted sch__note">
+          Would rather write it down? Email <a href={`mailto:${site.email}`}>{site.email}</a>.
+        </p>
+      </aside>
+
+      <div class="sch__picker">
+        <div class="sch__panel">
+          <div class="sch__month">
+            <p class="sch__month-name">{monthLabel}</p>
+            <p class="label">Pick a day</p>
+          </div>
+
+          <div class="sch__weekdays" aria-hidden="true">
+            {weekdayHeads.map((d) => <span>{d}</span>)}
+          </div>
+
+          <div class="sch__days" role="group" aria-label="Day">
+            {firstWeekday > 0 && <span class="sch__pad" style={`--pad:${firstWeekday}`} />}
+            {
+              days.map((day) => (
+                <button
+                  type="button"
+                  class="sch__day"
+                  data-day={day.date}
+                  data-label={day.label}
+                  aria-pressed="false"
+                  disabled={day.past || day.weekend}
+                >
+                  {day.date}
+                </button>
+              ))
+            }
+          </div>
+        </div>
+
+        <div class="sch__panel">
+          <p class="label">Pick a time</p>
+          <p class="small muted sch__tz">Central time</p>
+          <div class="sch__slots" role="group" aria-label="Time">
+            {
+              slots.map((slot) => (
+                <button type="button" class="sch__slot" data-slot={slot} aria-pressed="false" disabled>
+                  {slot}
+                </button>
+              ))
+            }
+          </div>
+        </div>
+
+        <form class="sch__form" data-sch-form novalidate>
+          <p class="sch__summary" data-sch-summary aria-live="polite">
+            No time selected yet.
+          </p>
+
+          <div class="field">
+            <label for="sch-name">Your name</label>
+            <input id="sch-name" name="name" type="text" autocomplete="name" required />
+          </div>
+
+          <div class="field">
+            <label for="sch-company">Shop or company</label>
+            <input id="sch-company" name="company" type="text" autocomplete="organization" />
+          </div>
+
+          <div class="field">
+            <label for="sch-email">Email</label>
+            <input id="sch-email" name="email" type="email" autocomplete="email" required />
+          </div>
+
+          <div class="field">
+            <label for="sch-about">What do you run, and what do you need?</label>
+            <textarea id="sch-about" name="about" rows="4"></textarea>
+          </div>
+
+          <button class="pill pill--primary pill--lg sch__submit" type="submit" disabled>
+            Request this time<span class="pill__chev" aria-hidden="true"></span>
+          </button>
+
+          <p class="small muted">
+            This scheduler is not connected to a calendar yet — nothing is sent and no
+            time is held.
+          </p>
+        </form>
+
+        <div class="sch__done" data-sch-done hidden>
+          <p class="label">Not booked</p>
+          <p class="sch__done-line" data-sch-done-line></p>
+          <p class="small muted">
+            Nothing was sent, because this scheduler is a placeholder. Email {' '}
+            <a href={`mailto:${site.email}`}>{site.email}</a> and one of us will confirm a
+            time.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .sch__head {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 36px;
+  }
+
+  .sch__lead {
+    max-width: 56ch;
+    color: var(--text-muted);
+  }
+
+  .sch {
+    display: grid;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .sch__detail,
+  .sch__panel,
+  .sch__form,
+  .sch__done {
+    padding: 24px;
+    border: 1px solid var(--rule);
+    background: var(--white);
+  }
+
+  .sch__facts {
+    margin-top: 12px;
+  }
+
+  .sch__note {
+    margin-top: 16px;
+    max-width: 36ch;
+  }
+
+  .sch__picker {
+    display: grid;
+    gap: 16px;
+  }
+
+  .sch__month {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .sch__month-name {
+    font-size: var(--fs-h3);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .sch__weekdays,
+  .sch__days {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .sch__weekdays {
+    margin-bottom: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--grey-600);
+    text-align: center;
+  }
+
+  .sch__pad {
+    grid-column: span var(--pad);
+  }
+
+  .sch__day,
+  .sch__slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 8px;
+    border: 1px solid var(--rule);
+    background: var(--white);
+    font: inherit;
+    font-size: var(--fs-small);
+    font-weight: 500;
+    color: var(--black);
+    cursor: pointer;
+    transition:
+      background-color 160ms cubic-bezier(0.3, 0, 0.15, 1),
+      border-color 160ms cubic-bezier(0.3, 0, 0.15, 1);
+  }
+
+  .sch__day:hover:not(:disabled),
+  .sch__slot:hover:not(:disabled) {
+    border-color: var(--black);
+  }
+
+  .sch__day:disabled,
+  .sch__slot:disabled {
+    color: var(--grey-400);
+    background: var(--grey-50);
+    cursor: not-allowed;
+  }
+
+  .sch__day[aria-pressed='true'],
+  .sch__slot[aria-pressed='true'] {
+    background: var(--black);
+    border-color: var(--black);
+    color: var(--white);
+  }
+
+  .sch__tz {
+    margin-top: 2px;
+  }
+
+  .sch__slots {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 6px;
+    margin-top: 14px;
+  }
+
+  .sch__form {
+    display: grid;
+    gap: 18px;
+    justify-items: start;
+  }
+
+  .sch__form .field {
+    width: 100%;
+  }
+
+  .sch__summary {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--t-periwinkle);
+    font-weight: 500;
+  }
+
+  .sch__submit:disabled {
+    background: var(--grey-300);
+    cursor: not-allowed;
+  }
+
+  .sch__done-line {
+    margin: 8px 0 12px;
+    font-size: var(--fs-lead);
+    font-weight: 500;
+  }
+
+  @media (min-width: 48rem) {
+    .sch {
+      grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+      gap: 24px;
+    }
+
+    .sch__detail,
+    .sch__panel,
+    .sch__form,
+    .sch__done {
+      padding: 28px;
+    }
+  }
+</style>
+
+<script>
+  /**
+   * Selection state only. Nothing here talks to a server: the submit handler
+   * swaps the form for a message that says the request was not sent.
+   */
+  const form = document.querySelector<HTMLFormElement>('[data-sch-form]');
+  const summary = document.querySelector<HTMLElement>('[data-sch-summary]');
+  const done = document.querySelector<HTMLElement>('[data-sch-done]');
+  const doneLine = document.querySelector<HTMLElement>('[data-sch-done-line]');
+  const days = [...document.querySelectorAll<HTMLButtonElement>('.sch__day')];
+  const slots = [...document.querySelectorAll<HTMLButtonElement>('.sch__slot')];
+  const submit = document.querySelector<HTMLButtonElement>('.sch__submit');
+
+  if (form && summary && submit) {
+    let day: string | null = null;
+    let slot: string | null = null;
+
+    const press = (buttons: HTMLButtonElement[], picked: HTMLButtonElement) => {
+      buttons.forEach((b) => b.setAttribute('aria-pressed', String(b === picked)));
+    };
+
+    const update = () => {
+      if (day && slot) {
+        summary.textContent = `${day} at ${slot}`;
+        submit.disabled = false;
+      } else if (day) {
+        summary.textContent = `${day} — now pick a time.`;
+        submit.disabled = true;
+      } else {
+        summary.textContent = 'No time selected yet.';
+        submit.disabled = true;
+      }
+    };
+
+    days.forEach((button) => {
+      button.addEventListener('click', () => {
+        day = button.dataset.label ?? null;
+        slot = null;
+        press(days, button);
+        slots.forEach((s) => {
+          s.disabled = false;
+          s.setAttribute('aria-pressed', 'false');
+        });
+        update();
+      });
+    });
+
+    slots.forEach((button) => {
+      button.addEventListener('click', () => {
+        slot = button.dataset.slot ?? null;
+        press(slots, button);
+        update();
+      });
+    });
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (!day || !slot || !form.reportValidity()) return;
+      if (doneLine) doneLine.textContent = `${day} at ${slot}`;
+      form.hidden = true;
+      if (done) done.hidden = false;
+    });
+  }
+</script>

@@ -1,0 +1,454 @@
+---
+/**
+ * The research: what 1,076 business buyers told G2 about asking AI first.
+ *
+ * Two blocks, each lifted from a different part of the reference.
+ *
+ *   1. THE FRAME — its "Use the whole web like it's an API" block. It sits flush
+ *      under the grid band, whose bottom rule is its top edge, and runs rail to
+ *      rail, split down the middle: a yellow-highlighted title, muted copy, a
+ *      mono line with chip-highlighted words and a square-bulleted mono list on
+ *      the left; a pixel-bar chart on the right.
+ *   2. THE CARDS — its "Trusted by" row, in the space under the frame. Four flat
+ *      pastel blocks, square, a hairline apart, big number over a mono label.
+ *
+ * There was a third block above these — the headline figure on a slab over a
+ * pixel landscape, after the reference's "10,000+ years saved". It came out; the
+ * chart already carries that figure, and the page read as saying it twice.
+ *
+ * Numbers come from `src/data/research.ts`, which the read-more page shares.
+ *
+ * MOTION is one thing: the two bars grow once, the first time the chart is 40%
+ * in view. Without JavaScript, or under `prefers-reduced-motion`, they render at
+ * full height — the attribute that would hold them at zero is only ever added by
+ * the script.
+ */
+import DitherCanvas from '../DitherCanvas.astro';
+import { answerEconomy as study } from '../../data/research';
+
+/** The chart's axis tops out here. Starts at zero; nothing is truncated. */
+const AXIS_MAX = 60;
+const ticks = [0, 20, 40, 60];
+---
+
+<section class="section research" id="research" aria-labelledby="research-title">
+  <div class="container">
+    <div class="rs-frame">
+      <div class="rs-frame__text">
+        <h2 id="research-title" class="rs-frame__title">
+          <span class="mark mark--highlight">The shortlist is written before anyone calls.</span>
+        </h2>
+
+        <div class="rs-frame__body">
+          <p>
+            G2 put the question to {study.sampleSize} people who buy for their companies.
+            Half now go to an AI assistant before Google, and what comes back is, more and
+            more, the shortlist.
+          </p>
+          <p>
+            They were buying software, not screen printing. It is the same person at the
+            same desk, though, and the habit does not stay in one department.
+          </p>
+        </div>
+
+        <p class="label rs-mono">
+          From <span class="rs-chip">ten blue links</span> to <span class="rs-chip"
+            >one answer</span
+          >
+        </p>
+
+        <ul class="rs-list">
+          {study.points.map((point) => <li>{point}</li>)}
+        </ul>
+
+        <div class="rs-cta">
+          <a class="pill pill--primary" href={study.path}>
+            Read the full study<span class="pill__chev" aria-hidden="true"></span>
+          </a>
+        </div>
+
+        <p class="small muted rs-source">
+          Source: {study.publisher}, “{study.shortTitle}” (April 2026). Survey of {
+            study.sampleSize
+          } B2B software buyers across {study.regions}, {study.fieldwork}.
+        </p>
+      </div>
+
+      <figure class="rs-frame__chart" data-rs-chart>
+        <figcaption class="label rs-chart__cap">
+          Start research with AI more often than Google
+        </figcaption>
+
+        <div class="rs-chart__plot">
+          {
+            ticks.map((t) => (
+              <span class="rs-chart__tick" style={`--t:${t / AXIS_MAX}`} aria-hidden="true">
+                <span class="rs-chart__tick-label">{t}%</span>
+              </span>
+            ))
+          }
+
+          {
+            study.trend.map((point, i) => (
+              <div class="rs-bar" style={`--v:${point.value / AXIS_MAX};--i:${i}`}>
+                <span class="rs-bar__val">{point.value}%</span>
+                <span class="rs-bar__fill">
+                  <DitherCanvas variant="field" tone={point.tone} cell={4} seed={77 + i * 19} />
+                </span>
+              </div>
+            ))
+          }
+        </div>
+
+        <div class="rs-chart__whens" aria-hidden="true">
+          {study.trend.map((point) => <span class="label">{point.when}</span>)}
+        </div>
+
+        {/* The bars are drawn, so the numbers they stand for are said once in
+            words for anyone not looking at them. */}
+        <p class="visually-hidden">
+          {study.trend.map((p) => `${p.when}: ${p.value}%.`).join(' ')}
+        </p>
+      </figure>
+    </div>
+
+    <div class="rs-cards">
+      <h3 class="rs-cards__title">What else {study.sampleSize} buyers told G2</h3>
+      <ul class="rs-cards__list">
+        {
+          study.cards.map((card) => (
+            <li class="rs-card" data-tint={card.tint}>
+              <p class="rs-card__num">{card.value}</p>
+              <p class="label rs-card__label">{card.label}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* The frame sits flush against the band above, as the reference's does. */
+  .research {
+    padding-top: 0;
+  }
+
+  /* ---------- the frame ---------- */
+
+  /* Rail to rail, and ruled at the bottom only: the band's own bottom rule is
+     its top edge, and the rails are its sides. A top border here would stack
+     on the band's rule into a 2px line. */
+  .rs-frame {
+    display: grid;
+    margin-inline: calc(var(--rail-inset) * -1);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .rs-frame__text {
+    padding: 32px var(--rail-inset) 40px;
+  }
+
+  /**
+   * TYPE IS THE SITE'S OWN, not the reference's: the title is a plain h2, the
+   * card heading a plain h3, the copy and the list are body text, the chip line
+   * is a `.label`, and the card figures are set like the price in the offer —
+   * weight 500, tracked in. Only the title's line-height is opened up, from the
+   * h2's 1.05 to 1.15, because it wears a highlight and the two lines' grounds
+   * would otherwise run into each other.
+   */
+  .rs-frame__title {
+    max-width: none;
+    line-height: 1.15;
+  }
+
+  .rs-frame__title .mark {
+    padding: 0.04em 0.18em 0.08em;
+  }
+
+  .rs-frame__body {
+    display: grid;
+    gap: 18px;
+    max-width: 46ch;
+    margin-top: 24px;
+    color: var(--text-muted);
+  }
+
+  /* Room between lines for the chips' grounds if the label wraps. */
+  .rs-mono {
+    margin-top: 36px;
+    line-height: 1.8;
+  }
+
+  .rs-chip {
+    padding: 0.1em 0.3em;
+    background: var(--t-blue);
+    color: var(--grey-900);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  .rs-list {
+    display: grid;
+    gap: 10px;
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .rs-list li {
+    display: grid;
+    grid-template-columns: 14px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+  }
+
+  .rs-list li::before {
+    content: '';
+    width: 14px;
+    height: 14px;
+    /* Centred on the first line of body text (1.45 line-height). */
+    margin-top: calc((1.45em - 14px) / 2);
+    background: var(--t-blue);
+  }
+
+  .rs-cta {
+    margin-top: 40px;
+  }
+
+  .rs-source {
+    max-width: 52ch;
+    margin-top: 16px;
+  }
+
+  /* ---------- the chart ---------- */
+
+  .rs-frame__chart {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 32px var(--rail-inset) 36px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .rs-chart__plot {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14%;
+    height: 260px;
+    margin-top: 36px;
+    /* Room on the left for the tick labels, which hang off the lines. */
+    padding-inline: 18% 6%;
+  }
+
+  .rs-chart__tick {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--t) * 100%);
+    height: 1px;
+    background: var(--rule);
+  }
+
+  .rs-chart__tick-label {
+    position: absolute;
+    left: 0;
+    bottom: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    color: var(--grey-600);
+  }
+
+  .rs-bar {
+    position: relative;
+    height: 100%;
+  }
+
+  .rs-bar__fill {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(var(--v) * 100%);
+    overflow: hidden;
+    transform-origin: 50% 100%;
+  }
+
+  .rs-bar__val {
+    position: absolute;
+    left: 0;
+    bottom: calc(var(--v) * 100% + 10px);
+    font-size: var(--fs-card);
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+
+  .rs-chart__whens {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14%;
+    margin-top: 12px;
+    padding-inline: 18% 6%;
+  }
+
+  /* Armed: held at zero until the chart is in view. Play: grow, staggered. */
+  .rs-frame__chart[data-armed] .rs-bar__fill {
+    transform: scaleY(0);
+  }
+
+  .rs-frame__chart[data-armed] .rs-bar__val {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  .rs-frame__chart[data-play] .rs-bar__fill {
+    transform: scaleY(1);
+    transition: transform 1100ms cubic-bezier(0.22, 0.61, 0.36, 1) calc(var(--i) * 240ms);
+  }
+
+  .rs-frame__chart[data-play] .rs-bar__val {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 400ms ease calc(var(--i) * 240ms + 700ms),
+      transform 400ms ease calc(var(--i) * 240ms + 700ms);
+  }
+
+  /* ---------- the cards ---------- */
+
+  .rs-cards {
+    margin-top: 56px;
+  }
+
+  .rs-cards__list {
+    display: grid;
+    gap: 6px;
+    margin: 24px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .rs-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 20px;
+    min-height: 112px;
+    padding: 16px;
+    background: var(--card-ground);
+  }
+
+  .rs-card[data-tint='pink'] {
+    --card-ground: var(--t-pink);
+  }
+
+  .rs-card[data-tint='grey'] {
+    --card-ground: var(--t-periwinkle);
+  }
+
+  .rs-card[data-tint='cream'] {
+    --card-ground: var(--t-cream);
+  }
+
+  .rs-card[data-tint='blue'] {
+    --card-ground: var(--t-blue);
+  }
+
+  .rs-card__num {
+    font-size: var(--fs-h2);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+  }
+
+  /* The site's label in every respect but colour: its grey-600 measures about
+     4.2:1 on the pink ground, under AA for 14px. Near-black clears all four. */
+  .rs-card__label {
+    color: var(--grey-900);
+  }
+
+  /* ---------- breakpoints ---------- */
+
+  @media (min-width: 30rem) {
+    .rs-cards__list {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (min-width: 48rem) {
+    .rs-cards {
+      margin-top: 72px;
+    }
+
+    .rs-chart__plot {
+      height: 500px;
+    }
+  }
+
+  @media (min-width: 62.5em) {
+    .rs-cards__list {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    /* The reference's card is 136px tall at this width. */
+    .rs-card {
+      min-height: 136px;
+    }
+
+    .rs-frame {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .rs-frame__text {
+      padding: 56px 40px 56px var(--rail-inset);
+    }
+
+    .rs-frame__chart {
+      padding: 56px 40px;
+      border-top: 0;
+      border-left: 1px solid var(--rule);
+    }
+
+    /* The column is as tall as the text beside it; the plot takes whatever the
+       caption and dates leave, so the caption lines up with the title. */
+    .rs-chart__plot {
+      flex: 1 1 auto;
+      height: auto;
+      min-height: 340px;
+    }
+  }
+</style>
+
+<script>
+  /**
+   * Grows the bars once, the first time the chart is properly in view.
+   * Nothing is armed under reduced motion or without IntersectionObserver, so
+   * the bars simply render at their full height.
+   */
+  const charts = [...document.querySelectorAll<HTMLElement>('[data-rs-chart]')];
+
+  if (
+    charts.length &&
+    'IntersectionObserver' in window &&
+    !matchMedia('(prefers-reduced-motion: reduce)').matches
+  ) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          (entry.target as HTMLElement).dataset.play = '';
+          io.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.4 }
+    );
+
+    for (const chart of charts) {
+      chart.dataset.armed = '';
+      io.observe(chart);
+    }
+  }
+</script>

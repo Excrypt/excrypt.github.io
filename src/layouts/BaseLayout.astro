@@ -12,8 +12,10 @@ interface Props {
   ogImage?: string;
   schemas?: SchemaNode[];
   noindex?: boolean;
+  /** 'grey' puts the page on the cool-grey ground. The home page stays white. */
+  ground?: 'white' | 'grey';
 }
-const props = Astro.props;
+const { ground = 'white', ...props } = Astro.props;
 ---
 
 <!doctype html>
@@ -21,7 +23,7 @@ const props = Astro.props;
   <head>
     <BaseHead {...props} />
   </head>
-  <body>
+  <body class:list={[ground === 'grey' && 'ground-grey']}>
     <a class="skip-link" href="#main">Skip to content</a>
     <Header />
     <main id="main">

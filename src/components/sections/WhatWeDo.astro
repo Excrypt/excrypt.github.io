@@ -1,5 +1,96 @@
 ---
-const items = [
+/**
+ * The three jobs.
+ *
+ * MODELLED ON the reference's "See what agents can do on the web" section, and
+ * measured off it rather than eyeballed:
+ *
+ *  - Each job is a row on a 12-column grid with 24px gutters. The text takes
+ *    the first four columns and sits under a 2px rule with 20px above the
+ *    title; the demonstration pane takes the other eight.
+ *  - From 62.5em the heading is sticky, and every row is sticky at the SAME top
+ *    just below it — so each row slides up and fully replaces the one before,
+ *    rather than stepping into a deck. The rows are held to one height so a
+ *    shorter one can never leave the bottom of a taller one showing under it.
+ *  - Below that nothing sticks. It is a plain stack, text above its pane, which
+ *    is what the reference itself does on a phone.
+ *
+ * THE PANES are illustrations, not screenshots, in the reference's idiom: a pale
+ * periwinkle band, a mono status line, and a clipped box with square markers at
+ * its top corners. Their content is invented to show the job — the same licence
+ * the hero's laptop takes with its shop names — and deliberately generic: no
+ * real shop, no real directory. The structured-data pane uses only properties
+ * schema.org actually defines, because it is the one pane a technical reader
+ * will check.
+ *
+ * THE MOTION. The reference's panes are looping screen-capture videos of an
+ * agent at work. These are built from the markup instead, and loop the same way
+ * — each replays from blank, roughly every eight seconds, as if recorded:
+ *
+ *  - Answers: the status and the buyer's query type in, then the result rises.
+ *  - Structure: the JSON streams in line by line, then a read-head sweeps it.
+ *  - Consistency: each listing shows "checking…", resolves in turn, and the
+ *    last lands on a mismatch that pulses.
+ *
+ * Three states, and the order matters:
+ *   1. No script, or reduced motion: the finished frame, static. The markup is
+ *      written in its end state so this costs nothing.
+ *   2. Script running, pane not yet seen (`[data-armed]`): content held back,
+ *      so the pane does not flash its finished state a frame before it plays.
+ *   3. Pane on screen (`[data-play]`): the loop runs. It stops when the pane
+ *      leaves the viewport or the tab is hidden, and replays from blank on
+ *      return rather than resuming mid-sentence.
+ *
+ * Typing is width-reveal with `steps()` set to the character count, like the
+ * hero's — but animated to the line's OWN rendered width, which the script
+ * measures once fonts are in, so each step reveals exactly one character. Not
+ * `n × 1ch`: in the query line the face's `1ch` came to 7.80px while its
+ * glyphs actually advance 7.96px, and over 51 characters that lost the last
+ * letter — at rest as well as while typing. At rest, with or without the
+ * script, a typed line is simply its natural width and cannot clip.
+ *
+ * The mono line under each job is its label, not a link. The reference repeats
+ * "TRY FOR FREE" three times; three identical calls to action in one section is
+ * a copy decision this site has not made, and the label adds information where
+ * a repeated CTA would only add noise.
+ */
+
+/** Character count for `steps()`, by code point so the ellipsis is one. */
+const chars = (s: string) => [...s].length;
+
+const answer = {
+  status: 'Buyer asks an assistant…',
+  query: '> who prints 48 hoodies, 5 day turn, near Arlington',
+  hitTitle: 'Your shop — Minimums & turnaround',
+  hitMeta: '48 pc min · 5 day turn · screen print, embroidery',
+};
+
+const schema = {
+  status: 'Assistant reads the page…',
+  lines: [
+    '{',
+    '  "@type": "LocalBusiness",',
+    '  "name": "Your Shop",',
+    '  "areaServed": "Arlington, TX",',
+    '  "knowsAbout": [',
+    '    "Screen printing",',
+    '    "Embroidery",',
+    '    "DTF"',
+    '  ]',
+    '}',
+  ],
+};
+
+const listings = {
+  status: 'Checking every listing…',
+  rows: [
+    { source: 'Website', hours: 'Mon–Fri 7–5', ok: true },
+    { source: 'Google Business Profile', hours: 'Mon–Fri 7–5', ok: true },
+    { source: 'Industry directory', hours: 'Mon–Sat 8–6', ok: false },
+  ],
+};
+
+const jobs = [
   {
     label: 'Answers',
     title: 'Answer the questions buyers type',
@@ -7,7 +98,8 @@ const items = [
       'We write pages that answer real sourcing questions in the words buyers use — ' +
       'minimums, turnaround, what you will and will not take on. Those pages are what ' +
       'a model reads when someone goes looking for what you sell.',
-    tone: '',
+    pane: 'answer',
+    status: answer.status,
   },
   {
     label: 'Structure',
@@ -16,7 +108,8 @@ const items = [
       'Methods, run sizes, minimums and in-hands turnaround stated plainly and marked ' +
       'up in structured data — or, if you distribute, what you source and how fast you ' +
       'quote. An assistant should not have to infer any of it from a gallery page.',
-    tone: 'halftone--sky',
+    pane: 'schema',
+    status: schema.status,
   },
   {
     label: 'Consistency',
@@ -25,98 +118,760 @@ const items = [
       'Your site, your Google Business Profile and the industry directories say the ' +
       'same thing about address, hours and what you handle. Contradictions are a ' +
       'common reason a supplier gets left out of an answer.',
-    tone: 'halftone--green',
+    pane: 'listings',
+    status: listings.status,
   },
-];
+] as const;
 ---
 
 <section class="section" id="what-we-do">
   <div class="container">
-    <div class="section-head">
-      <h2>Three jobs, <span class="hi">every month</span></h2>
-      <p class="lead">
-        No dashboards, no retainer theatre. These are the things that decide whether you
-        turn up in an answer.
-      </p>
-    </div>
+    <div class="jobs-wrap">
+      <div class="jobs-head">
+        <h2>Three jobs, <span class="hi">every month</span></h2>
+        <p class="lead">
+          No dashboards, no retainer theatre. These are the things that decide whether
+          you turn up in an answer.
+        </p>
+      </div>
 
-    <div class="bento">
-      {
-        items.map((item, i) => (
-          <article class="bento__card" style={`--i:${i}`}>
-            <div class:list={['halftone', item.tone]} aria-hidden="true" />
-            <div class="bento__body">
-              <h3>{item.title}</h3>
-              <p class="muted">{item.body}</p>
-            </div>
-          </article>
-        ))
-      }
+      <ol class="jobs">
+        {
+          jobs.map((job, i) => (
+            <li class="job" style={`--i:${i}`}>
+              <div class="job__text">
+                <h3 class="job__title">{job.title}</h3>
+                <p class="job__body">{job.body}</p>
+                <p class="label job__label">{job.label}</p>
+              </div>
+
+              <figure class="job__pane" data-pane={job.pane} aria-hidden="true">
+                <p class="job__status">
+                  <span
+                    class="job__type"
+                    style={`--n:${chars(job.status)};--cps:34ms;--d:0ms`}
+                  >
+                    {job.status}
+                  </span>
+                </p>
+
+                <div class="job__box">
+                  {job.pane === 'answer' && (
+                    <>
+                      <span class="job__qline">
+                        <span
+                          class="job__q job__type"
+                          style={`--n:${chars(answer.query)};--cps:30ms;--d:900ms`}
+                        >
+                          {answer.query}
+                        </span>
+                        <span class="job__caret" />
+                      </span>
+                      <span class="job__hit">
+                        <span class="job__dot" />
+                        <span class="job__hit-title">{answer.hitTitle}</span>
+                        <span>{answer.hitMeta}</span>
+                      </span>
+                    </>
+                  )}
+
+                  {job.pane === 'schema' && (
+                    <>
+                      {/* One line, nothing between the tags: this is a `pre`,
+                          so any indentation or newline in the markup becomes
+                          part of the JSON on screen. */}
+                      <pre class="job__code">{schema.lines.map((line, n) => <span class="job__line" style={`--i:${n}`}>{line}</span>)}</pre>
+                      <span class="job__scan" />
+                    </>
+                  )}
+
+                  {job.pane === 'listings' && (
+                    <span class="job__rows">
+                      {listings.rows.map((row, n) => (
+                        <span class="job__row" style={`--i:${n}`}>
+                          <span>{row.source}</span>
+                          <span>{row.hours}</span>
+                          <span class="job__verdict">
+                            <span class="job__checking">checking…</span>
+                            <span class:list={['job__result', row.ok ? 'job__ok' : 'job__bad']}>
+                              {row.ok ? 'match' : 'mismatch'}
+                            </span>
+                          </span>
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                </div>
+              </figure>
+            </li>
+          ))
+        }
+      </ol>
     </div>
   </div>
 </section>
 
 <style>
-  .bento {
-    display: grid;
-    gap: 16px;
+  /* The one spacing value for a job's title: the gap above it (from the rule)
+     and, when a row is collapsed into a strip on desktop, the gap below it. One
+     value, so the two cannot drift apart. */
+  .jobs-wrap {
+    --title-pad: 24px;
   }
 
-  .bento__card {
+  /* --- heading --- */
+
+  .jobs-head {
     display: flex;
     flex-direction: column;
-    padding: 10px;
-    border: 1px solid var(--rule);
-    border-radius: var(--r-xl);
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+
+  .jobs-head .lead {
+    max-width: 58ch;
+    color: var(--text-muted);
+  }
+
+  /* --- rows --- */
+
+  .jobs {
+    display: grid;
+    gap: 32px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .job {
+    display: grid;
+    gap: 20px;
+    /* Opaque, so on desktop a row genuinely covers the one it slides over. */
     background: var(--white);
   }
 
-  .bento__body {
+  .job__text {
     display: flex;
     flex-direction: column;
+    gap: 12px;
+    padding-top: var(--title-pad);
+    border-top: 2px solid var(--rule);
+  }
+
+  .job__title {
+    font-size: var(--fs-body);
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: 0.015em;
+  }
+
+  /* The title gets --title-pad below it as well as above, open or collapsed.
+     The column's flex gap is 12px, so the body takes the difference. It is not
+     only for symmetry: on desktop a collapsed strip ends exactly --title-pad
+     under the title, and with a 12px gap the first line of the body started
+     inside the strip and showed half-cut beneath every covered title. */
+  .job__body {
+    margin-top: calc(var(--title-pad) - 12px);
+    color: var(--grey-800);
+  }
+
+  .job__label {
+    margin-top: 4px;
+  }
+
+  /* --- the demonstration pane ---
+     A band of tint with the box clipped by its bottom edge, the way the
+     reference crops its own panes: the box reads as a window onto something
+     longer rather than as a self-contained card. */
+
+  .job__pane {
+    --ink-code: #4a5b80; /* 6.4:1 on the box ground — AA at 13px */
+    --box-ground: #f7f9fc;
+
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    min-height: 220px;
+    margin: 0;
+    padding: 36px 28px 0;
+    overflow: hidden;
+    background: var(--t-periwinkle);
+  }
+
+  /* Lighter each row, as the reference's are. The first two are its own palette
+     tokens — --color-pale-gray #e2e9f3 (which --t-periwinkle already is) and
+     --color-cool-gray-200 #f0f4f8. The reference has no token for its third,
+     palest band; #f6f8fb is read off its screen, so treat that one as an
+     estimate. On that band the box takes a white ground, or it would vanish
+     into it. */
+  .job:nth-child(2) .job__pane {
+    background: #f0f4f8;
+  }
+
+  .job:nth-child(3) .job__pane {
+    --box-ground: var(--white);
+
+    background: #f6f8fb;
+  }
+
+  .job__status {
+    --ls: 0.02em;
+
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    letter-spacing: var(--ls);
+    color: var(--grey-950);
+  }
+
+  .job__box {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px 22px 28px;
+    border: 1px solid var(--rule);
+    border-bottom: 0;
+    background: var(--box-ground);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    color: var(--ink-code);
+  }
+
+  /* The two square markers at the box's top corners. */
+  .job__box::before,
+  .job__box::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    width: 9px;
+    height: 9px;
+    border: 1px solid var(--rule);
+    background: var(--box-ground);
+  }
+
+  .job__box::before {
+    left: -5px;
+  }
+
+  .job__box::after {
+    right: -5px;
+  }
+
+  .job__qline {
+    display: block;
+    color: var(--grey-950);
+  }
+
+  .job__hit {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 10px;
+    row-gap: 2px;
+    align-items: center;
+    padding: 12px 14px;
+    background: var(--white);
+  }
+
+  .job__dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--ink-code);
+  }
+
+  .job__hit-title {
+    font-family: var(--font-sans, inherit);
+    font-weight: 600;
+    color: var(--ink-code);
+  }
+
+  .job__hit > span:last-child {
+    grid-column: 2;
+  }
+
+  /* `pre-wrap`, not `pre`. At phone width the longest line is about 255px in a
+     208px box, and `pre` clipped the JSON mid-token — which reads as a
+     rendering fault, not as a window onto something longer. `pre-wrap` keeps
+     the indentation and wraps only the lines that do not fit. Each line is its
+     own block so it can stream in on its own. */
+  .job__code {
+    margin: 0;
+    font: inherit;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .job__line {
+    display: block;
+  }
+
+  /* The read-head. A soft band drawn as a background and moved by
+     `background-position`, so its travel is the box's own height at any size
+     without measuring anything. Invisible outside the animation. */
+  .job__scan {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+        180deg,
+        transparent,
+        color-mix(in srgb, var(--ink-code) 14%, transparent),
+        transparent
+      )
+      no-repeat;
+    background-size: 100% 40px;
+    background-position: 0 0%;
+    opacity: 0;
+  }
+
+  .job__rows {
+    display: grid;
     gap: 10px;
-    padding: 22px 14px 16px;
   }
 
-  .bento__body h3 {
-    font-size: var(--fs-card);
-    line-height: 1.08;
-    letter-spacing: -0.01em;
+  .job__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto;
+    gap: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--rule);
   }
 
-  /**
-   * Mobile only: the cards stack. Each one sticks below the header and the next
-   * scrolls up over it, leaving a sliver of the one beneath.
-   *
-   * This is `position: sticky`, not an animation — no script, no scroll
-   * listener, and it costs nothing per frame. Three things it depends on:
-   *
-   *  - The cards are opaque. They already carry `background: var(--white)` and a
-   *    border, so a card genuinely covers the one under it rather than letting
-   *    it show through.
-   *  - Nothing in the ancestor chain scrolls. `html` uses `overflow-x: clip`
-   *    rather than `hidden` — `clip` does not create a scroll container, so
-   *    sticky still resolves against the viewport. If that ever becomes
-   *    `hidden`, this silently stops working.
-   *  - Later cards paint over earlier ones. They are all positioned and carry no
-   *    `z-index`, so DOM order settles it; the header's `z-index: 30` keeps the
-   *    stack passing underneath it.
-   *
-   * `top` steps by 14px per card so each one parks just below the last and the
-   * stack reads as a deck rather than as one card replacing another.
-   */
-  @media (max-width: 47.999rem) {
-    .bento__card {
-      position: sticky;
-      /* Clears the 72px sticky header, then one step per card. */
-      top: calc(84px + var(--i) * 14px);
+  /* "checking…" and the result share one cell, stacked, so swapping between
+     them never moves the row. The result is what shows at rest. */
+  .job__verdict {
+    display: grid;
+    justify-items: end;
+  }
+
+  .job__verdict > * {
+    grid-area: 1 / 1;
+  }
+
+  .job__checking {
+    color: var(--grey-600);
+    opacity: 0;
+  }
+
+  .job__ok {
+    color: #1b7f3a;
+  }
+
+  .job__bad {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* --- typing --- */
+
+  /* At rest a typed line is its natural width — nothing to clip, script or no
+     script. Once the loop is armed the script hands over the line's measured
+     width as --w, and the typing runs from 0 to that in `steps(n)`: one step,
+     one character. If --w never arrives the line stays at its natural width
+     and simply appears rather than typing. `max-width` guards a narrow box;
+     where the query would outrun one, it fades instead (see the phone block). */
+  .job__type {
+    display: inline-block;
+    vertical-align: bottom;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .job__pane[data-armed] .job__type {
+    width: var(--w, auto);
+  }
+
+  .job__caret {
+    display: inline-block;
+    width: 0.55ch;
+    height: 1.05em;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    background: currentColor;
+    opacity: 0;
+  }
+
+  /* --- the loop ---
+     Everything below is scoped to `[data-armed]` / `[data-play]`, which only
+     the script sets — so without it, or under reduced motion, none of this
+     applies and the pane is its static finished frame. */
+
+  /* Held back until the pane is first seen. */
+  .job__pane[data-armed]:not([data-play]) .job__type {
+    width: 0;
+  }
+
+  .job__pane[data-armed]:not([data-play]) :is(.job__hit, .job__line, .job__result) {
+    opacity: 0;
+  }
+
+  .job__pane[data-play] .job__type {
+    animation: jobType calc(var(--n) * var(--cps)) steps(var(--n)) var(--d) both;
+  }
+
+  .job__pane[data-play] .job__caret {
+    animation: jobBlink 1s steps(1, end) 900ms infinite both;
+  }
+
+  /* Answers */
+  .job__pane[data-play] .job__hit {
+    animation: jobRise 520ms cubic-bezier(0.22, 0.61, 0.36, 1) 2700ms both;
+  }
+
+  .job__pane[data-play] .job__dot {
+    animation: jobPulse 1400ms ease-in-out 3300ms infinite;
+  }
+
+  /* Structure */
+  .job__pane[data-play] .job__line {
+    animation: jobLine 260ms ease-out calc(950ms + var(--i) * 170ms) both;
+  }
+
+  .job__pane[data-play] .job__scan {
+    animation: jobScan 1500ms ease-in-out 2700ms both;
+  }
+
+  /* Consistency: each row checks for 500ms, 700ms apart, then resolves. */
+  .job__pane[data-play] .job__row {
+    animation: jobRowScan 700ms ease-out calc(900ms + var(--i) * 700ms) both;
+  }
+
+  .job__pane[data-play] .job__checking {
+    animation: jobChecking 500ms linear calc(900ms + var(--i) * 700ms) forwards;
+  }
+
+  .job__pane[data-play] .job__result {
+    animation: jobResolve 240ms ease-out calc(1400ms + var(--i) * 700ms) both;
+  }
+
+  .job__pane[data-play] .job__bad {
+    animation:
+      jobResolve 240ms ease-out calc(1400ms + var(--i) * 700ms) both,
+      jobPulse 700ms ease-in-out calc(1700ms + var(--i) * 700ms) 2;
+  }
+
+  /* No `to`: the typed line animates up to its own resting width. */
+  @keyframes jobType {
+    from {
+      width: 0;
     }
   }
 
-  @media (min-width: 48rem) {
-    .bento {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
+  @keyframes jobBlink {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    50.01%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes jobRise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+
+  @keyframes jobLine {
+    from {
+      opacity: 0;
+      transform: translateX(-6px);
+    }
+  }
+
+  @keyframes jobScan {
+    0% {
+      opacity: 0;
+      background-position: 0 0%;
+    }
+    12%,
+    88% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      background-position: 0 100%;
+    }
+  }
+
+  @keyframes jobRowScan {
+    from {
+      background: color-mix(in srgb, var(--ink-code) 9%, transparent);
+    }
+  }
+
+  /* Visible for its whole window, then gone: `forwards` holds the last frame,
+     and before its delay the base style keeps it hidden. */
+  @keyframes jobChecking {
+    0%,
+    99% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes jobResolve {
+    from {
+      opacity: 0;
+      transform: translateY(3px);
+    }
+  }
+
+  @keyframes jobPulse {
+    50% {
+      opacity: 0.35;
+    }
+  }
+
+  /* Phones: the pane's gutters were sized for a desktop band. At 390px they
+     left the box 208px of content, which is where the code block ran out. The
+     buyer's query is about 400px as one line, so here it wraps and fades in
+     rather than typing off the edge of the box. */
+  @media (max-width: 29.999rem) {
+    .job__pane {
+      padding: 28px 18px 0;
+    }
+
+    .job__box {
+      padding: 16px 16px 24px;
+    }
+
+    /* Listed at every state's specificity, so neither the measured --w nor
+       the held-back `width: 0` can put the query back on one line here. */
+    .job__pane .job__q.job__type,
+    .job__pane[data-armed] .job__q.job__type,
+    .job__pane[data-armed]:not([data-play]) .job__q.job__type {
+      display: inline;
+      width: auto;
+      white-space: normal;
+    }
+
+    .job__pane[data-play] .job__q.job__type {
+      animation: jobRise 420ms ease-out var(--d) both;
+    }
+
+    .job__pane[data-armed]:not([data-play]) .job__q.job__type {
+      opacity: 0;
+    }
+  }
+
+  /* --- desktop: the reference's split, and its stacking ---
+     Everything below lines up on the same 12 columns and 24px gutters the
+     reference uses, so the text column is a third of the row and the pane two
+     thirds, at any container width. */
+  @media (min-width: 62.5em) {
+    /*
+     * THE PIN, AND THE RELEASE.
+     *
+     * Three numbers, and everything is derived from them:
+     *   --pin-top   where the heading pins, just under the 72px site header
+     *   --row-top   where every row pins, clear of the heading's text
+     *   --row-h     the one height all rows are held to
+     *
+     * The heading and the rows are sticky in DIFFERENT containing blocks — the
+     * heading in `.jobs-wrap`, the rows in `.jobs` — and a sticky element lets
+     * go when its own bottom edge reaches its container's bottom. With a
+     * heading only as tall as its text, it let go about 370px after the rows
+     * did, and for those 370px the released rows slid up behind it and out
+     * above it. That is the overlap this replaces.
+     *
+     * So the heading's sticky BOX is stretched down to the exact line the
+     * pinned rows end on: from --pin-top to --row-top + --row-h. `.jobs` is the
+     * last thing in `.jobs-wrap`, so both containers end on the same line and
+     * both let go on the same frame — the moment the last row lands — and the
+     * section scrolls away as one piece, which is what the reference does.
+     *
+     * The stretched box must not push the rows down, so the LIST is pulled up
+     * over its lower part with a negative top margin. In flow, the first row
+     * then starts exactly (--row-top − --pin-top) below the heading, which
+     * also means it reaches its pin on the same frame the heading reaches its
+     * own. The lower part of the heading's box is empty and transparent; the
+     * rows come later in the DOM, so they paint over it and take the pointer.
+     *
+     * The negative margin has to live on the list, not on the heading. A
+     * sticky element is constrained by its MARGIN box, so `margin-bottom:
+     * -300px` on the heading shrank the box sticky actually uses straight back
+     * to 184px — cancelling the stretch exactly, and leaving the heading
+     * pinned 300px past the rows, which is the overlap all over again. On the
+     * list it moves the list and touches nothing sticky: the rows are held by
+     * the list's content box, which its own margin does not change.
+     */
+    .jobs-wrap {
+      --pin-top: 84px;
+      /* 40px under the heading's text, which ends by 198px at every width
+         from here up (it measures 107–114px). */
+      --row-top: 238px;
+      /* The FIRST row's height. Each later row is one strip shorter; the third
+         is --row-h − 2 × --strip, and this is sized so its text still fits at
+         1000px, where the column is narrowest, with ~24px to spare. */
+      --row-h: 412px;
+      /* What a covered row leaves showing, derived rather than typed: its 2px
+         rule, --title-pad above the title, one title line (16px × 1.3), and
+         --title-pad again below it. So the collapsed title is centred in its
+         strip by construction — change the padding and the strip follows. */
+      --strip: calc(2px + 2 * var(--title-pad) + 1rem * 1.3);
+    }
+
+    .jobs-head {
+      position: sticky;
+      top: var(--pin-top);
+      height: calc(var(--row-top) + var(--row-h) - var(--pin-top));
+      margin-bottom: 0;
+    }
+
+    .jobs {
+      gap: 40px;
+      margin-top: calc(var(--row-h) * -1);
+    }
+
+    /*
+     * THE STACK. Each row pins one strip lower than the one before, so a
+     * covered row leaves its rule and title showing — the way the reference's
+     * titles stack — and its pane leaves a matching band on the right.
+     *
+     * And each row is one strip SHORTER, so all three end on the same line:
+     * --row-top + --row-h. That is not only for looks. A sticky row lets go
+     * when the list's bottom reaches its own bottom edge, so with equal
+     * heights and stepped tops they would let go one at a time — the last
+     * sliding up over the others and collapsing the strips before the section
+     * left. Ending on one line, they let go on the same frame, and so does the
+     * heading, whose box ends on that line too (see above).
+     *
+     * Clear of the heading's text at every width from here up: the heading
+     * measures 107–114px, so it ends by 198px, and the first row pins at 238.
+     */
+    .job {
+      position: sticky;
+      top: calc(var(--row-top) + var(--i) * var(--strip));
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: 24px;
+      row-gap: 0;
+      /* The panes are cropped to fit rather than growing. */
+      height: calc(var(--row-h) - var(--i) * var(--strip));
+    }
+
+    .job__text {
+      grid-column: 1 / span 4;
+      align-self: start;
+    }
+
+    .job__pane {
+      grid-column: 5 / span 8;
+      height: 100%;
+      min-height: 0;
+      padding: 44px 44px 0;
     }
   }
 </style>
+
+<script>
+  /**
+   * Runs each pane's loop while it is on screen.
+   *
+   * Same shape as the capability carousel's: nothing under reduced motion, an
+   * IntersectionObserver for "is it on screen", and a timer loop that stops on
+   * leaving and on a hidden tab. Each pane is its own loop, because on a phone
+   * they are far apart and only one is ever visible.
+   *
+   * A replay is the play attribute coming off and going back on with a reflow
+   * in between. That restarts every CSS animation in the pane from its first
+   * frame, which is what makes it read as a recording playing again rather
+   * than as a state being toggled.
+   *
+   * On desktop the rows stack, so a covered pane still counts as intersecting
+   * and keeps looping underneath. That is a few compositor-only animations on
+   * an element nobody can see — not worth an occlusion check to save.
+   */
+  const panes = [...document.querySelectorAll<HTMLElement>('#what-we-do .job__pane')];
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /** Length of one recording, per pane: the animation plus a held last frame. */
+  const CYCLE: Record<string, number> = { answer: 7600, schema: 8200, listings: 8200 };
+
+  if (panes.length && !reduced && 'IntersectionObserver' in window) {
+    const state = new Map<HTMLElement, { inView: boolean; timer: number }>();
+
+    const replay = (pane: HTMLElement) => {
+      pane.removeAttribute('data-play');
+      void pane.offsetWidth;
+      pane.setAttribute('data-play', '');
+    };
+
+    const stop = (pane: HTMLElement) => {
+      const s = state.get(pane);
+      if (s) clearTimeout(s.timer);
+    };
+
+    const run = (pane: HTMLElement) => {
+      const s = state.get(pane);
+      if (!s) return;
+      clearTimeout(s.timer);
+      const cycle = CYCLE[pane.dataset.pane || ''] || 8000;
+      const tick = () => {
+        if (!s.inView || document.hidden) return;
+        replay(pane);
+        s.timer = window.setTimeout(tick, cycle);
+      };
+      tick();
+    };
+
+    /**
+     * Each typed line's real rendered width, as --w. A Range over the text is
+     * measured rather than the element, because while a line is held back the
+     * element is 0px wide but its text still lays out at full length. Rounded
+     * up with a pixel spare, so sub-pixel rounding can never clip the last
+     * glyph. Run before arming, and again once fonts have landed: a fallback
+     * face measured first would size every line for the wrong font.
+     */
+    const measure = (pane: HTMLElement) => {
+      pane.querySelectorAll<HTMLElement>('.job__type').forEach((el) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const w = range.getBoundingClientRect().width;
+        if (w > 0) el.style.setProperty('--w', `${Math.ceil(w) + 1}px`);
+      });
+    };
+
+    panes.forEach((pane) => {
+      measure(pane);
+      pane.dataset.armed = '';
+      state.set(pane, { inView: false, timer: 0 });
+    });
+
+    document.fonts?.ready.then(() => panes.forEach(measure)).catch(() => {});
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const pane = entry.target as HTMLElement;
+          const s = state.get(pane);
+          if (!s) return;
+          const was = s.inView;
+          s.inView = entry.isIntersecting;
+          if (s.inView && !was && !document.hidden) run(pane);
+          else if (!s.inView) stop(pane);
+        });
+      },
+      { threshold: 0.35 }
+    );
+
+    panes.forEach((pane) => io.observe(pane));
+
+    document.addEventListener('visibilitychange', () => {
+      panes.forEach((pane) => {
+        if (document.hidden) stop(pane);
+        else if (state.get(pane)?.inView) run(pane);
+      });
+    });
+  }
+</script>

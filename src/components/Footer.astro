@@ -14,36 +14,34 @@ const year = new Date().getFullYear();
     <div class="ftr__cols">
       <nav class="ftr__col" aria-label="Site">
         <p class="ftr__head">Site</p>
-        <a href="/#the-shift">The shift</a>
-        <a href="/#what-we-do">What we do</a>
-        <a href="/#how-it-works">How it works</a>
-        <a href="/#who-we-are">Who we are</a>
-        <a href="/#offer">Pricing</a>
-        <a href="/#faq">Questions</a>
-        <a href="/contact/">Contact</a>
+        <a class="wipe" href="/the-shift/">The shift</a>
+        <a class="wipe" href="/what-we-do/">What we do</a>
+        <a class="wipe" href="/research/">Research</a>
+        <a class="wipe" href="/who-we-are/">Who we are</a>
+        <a class="wipe" href="/pricing/">Pricing</a>
+        <a class="wipe" href="/questions/">Questions</a>
       </nav>
 
       <div class="ftr__col">
         <p class="ftr__head">Contact</p>
-        <a class="tnum" href={`tel:${site.phone.e164}`}>{site.phone.display}</a>
-        <a href={`mailto:${site.email}`}>{site.email}</a>
-        <a href="/contact/">Send a message</a>
+        <a class="wipe" href="/contact/">Talk to us</a>
+        <a class="wipe" href={`mailto:${site.email}`}>{site.email}</a>
       </div>
 
       <nav class="ftr__col ftr__col--wide" aria-label="Answers">
         <p class="ftr__head">Answers</p>
         {
           answers.map((entry) => (
-            <a href={`/answers/${entry.id}/`}>{entry.data.title}</a>
+            <a class="wipe" href={`/answers/${entry.id}/`}>{entry.data.title}</a>
           ))
         }
-        <a href="/answers/">All answers</a>
+        <a class="wipe" href="/answers/">All answers</a>
       </nav>
     </div>
 
     <div class="ftr__base">
-      <Wordmark invert />
-      <p class="ftr__legal">
+      <Wordmark />
+      <p class="ftr__legal muted">
         &copy; {year} {site.legalName}. You own the domain, the profile and every
         account.
       </p>
@@ -52,11 +50,13 @@ const year = new Date().getFullYear();
 </footer>
 
 <style>
-  /* Measured off their footer: #ff4500 with black text, not white. Black on this
-     ground is 6.10:1, so the whole footer clears AA — which white would not. */
+  /* White, with the orange kept for the link wipe — the fill that sweeps in
+     behind a link on hover (see `.wipe` in global.css). */
   .ftr {
-    background: var(--c-red);
+    /* Matches the page's ground, so the footer goes grey on a grey page. */
+    background: var(--page-ground, var(--white));
     color: var(--black);
+    border-top: 1px solid var(--rule);
     padding-block: 56px 32px;
   }
 
@@ -76,16 +76,17 @@ const year = new Date().getFullYear();
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 14px;
+    gap: 8px;
   }
 
   .ftr__head {
+    margin-bottom: 6px;
     font-family: var(--font-mono);
     font-size: var(--fs-mono);
     font-weight: 500;
     letter-spacing: 0.09em;
     text-transform: uppercase;
-    color: var(--black);
+    color: var(--grey-600);
   }
 
   .ftr__col a {
@@ -96,13 +97,6 @@ const year = new Date().getFullYear();
     line-height: 1.25;
     letter-spacing: -0.005em;
     color: var(--black);
-    text-decoration: none;
-  }
-
-  .ftr__col a:hover {
-    text-decoration: underline;
-    text-underline-offset: 0.18em;
-    text-decoration-thickness: 2px;
   }
 
   .ftr__base {
@@ -113,7 +107,7 @@ const year = new Date().getFullYear();
     gap: 16px 24px;
     margin-top: 56px;
     padding-top: 24px;
-    border-top: 1px solid color-mix(in srgb, var(--black) 24%, transparent);
+    border-top: 1px solid var(--rule);
   }
 
   .ftr__legal {

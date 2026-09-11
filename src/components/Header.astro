@@ -1,32 +1,32 @@
 ---
-import { site } from '../data/site';
 import Wordmark from './Wordmark.astro';
+import { site } from '../data/site';
 
+/** Every nav destination is now a page of its own. */
 const links = [
-  { href: '/#the-shift', label: 'The shift' },
-  { href: '/#what-we-do', label: 'What we do' },
-  { href: '/#how-it-works', label: 'How it works' },
-  { href: '/#who-we-are', label: 'Who we are' },
-  { href: '/#offer', label: 'Pricing' },
+  { href: '/the-shift/', label: 'The shift' },
+  { href: '/what-we-do/', label: 'What we do' },
+  { href: '/research/', label: 'Research' },
+  { href: '/who-we-are/', label: 'Who we are' },
+  { href: '/pricing/', label: 'Pricing' },
+  { href: '/questions/', label: 'Questions' },
   { href: '/answers/', label: 'Answers' },
-  { href: '/contact/', label: 'Contact' },
+  { href: '/contact/', label: 'Talk to us' },
 ];
+
+/** The desktop bar carries the five that matter; the rest live in the menu. */
+const primary = links.slice(0, 5);
 ---
 
 <header class="hdr">
   <div class="container hdr__inner">
-    <Wordmark />
+    <Wordmark compact />
 
     <nav class="hdr__nav" aria-label="Main">
-      <a href="/#the-shift">The shift</a>
-      <a href="/#how-it-works">How it works</a>
-      <a href="/#offer">Pricing</a>
-      <a href="/answers/">Answers</a>
-      <a href="/contact/">Contact</a>
+      {primary.map((l) => <a class="wipe" href={l.href}>{l.label}</a>)}
     </nav>
 
     <div class="hdr__actions">
-      <!-- <a class="hdr__phone tnum" href={`tel:${site.phone.e164}`}>{site.phone.display}</a> -->
       <a class="pill pill--primary hdr__cta" href="/contact/">
         Talk to us<span class="pill__chev" aria-hidden="true"></span>
       </a>
@@ -41,14 +41,14 @@ const links = [
 
         <div class="menu__panel">
           <nav class="menu__links" aria-label="Menu">
-            {links.map((l) => <a href={l.href}>{l.label}</a>)}
+            {links.slice(0, -1).map((l) => <a href={l.href}>{l.label}</a>)}
           </nav>
 
+          {/* Two buttons sharing the row, as the reference's menu has — and
+              neither repeats a link from the list above it. */}
           <div class="menu__actions">
-            <a class="pill pill--quiet pill--lg tnum" href={`tel:${site.phone.e164}`}>
-              {site.phone.display}
-            </a>
-            <a class="pill pill--primary pill--lg" href="/contact/">
+            <a class="pill pill--secondary" href={`mailto:${site.email}`}>Email us</a>
+            <a class="pill pill--primary" href="/contact/">
               Talk to us<span class="pill__chev" aria-hidden="true"></span>
             </a>
           </div>
@@ -59,13 +59,17 @@ const links = [
 </header>
 
 <style>
+  /* Solid, not a blur over the page: the reference's own bar is an opaque
+     white band with a hairline under it. */
   .hdr {
-    --hdr-h: 72px;
+    /* The reference's bar is 3.5rem on a phone — read off its own --nav-height
+       — and opens up on desktop. */
+    --hdr-h: 56px;
     position: sticky;
     top: 0;
     z-index: 30;
-    background: color-mix(in srgb, var(--white) 88%, transparent);
-    backdrop-filter: blur(12px);
+    /* Matches the page's ground, so the bar goes grey on a grey page. */
+    background: var(--page-ground, var(--white));
     border-bottom: 1px solid var(--rule);
   }
 
@@ -93,30 +97,27 @@ const links = [
     color: var(--grey-700);
   }
 
-  .hdr__nav a:hover {
-    color: var(--black);
-  }
-
   .hdr__actions {
     display: flex;
     align-items: center;
     gap: 16px;
   }
 
-  .hdr__phone,
   .hdr__cta {
     display: none;
   }
 
   /* --- the hamburger --- */
 
+  /* 40px of hit area for a 20px icon: the icon matches the reference's, and the
+     target stays large enough to hit with a thumb. */
   .menu__btn {
     position: relative;
     display: grid;
     place-items: center;
-    width: 44px;
-    height: 44px;
-    margin-right: -10px;
+    width: 40px;
+    height: 40px;
+    margin-right: -8px;
     cursor: pointer;
     list-style: none;
   }
@@ -131,8 +132,8 @@ const links = [
   .menu__icon::before,
   .menu__icon::after {
     display: block;
-    width: 24px;
-    height: 2px;
+    width: 20px;
+    height: 1.5px;
     background: var(--black);
     transition:
       transform 180ms ease,
@@ -146,11 +147,11 @@ const links = [
   }
 
   .menu__icon::before {
-    transform: translateY(-7px);
+    transform: translateY(-6px);
   }
 
   .menu__icon::after {
-    transform: translateY(7px);
+    transform: translateY(6px);
   }
 
   .menu[open] .menu__icon {
@@ -167,11 +168,6 @@ const links = [
 
   /* --- the panel --- */
 
-  /* Absolute against .hdr, not fixed to the viewport. The header carries a
-     `backdrop-filter`, and any filter on an ancestor makes it the containing
-     block for fixed descendants — so `position: fixed` here was being scoped to
-     the header's own box and clipped to a 72px strip. The header is full-width
-     and stuck to the top, so absolute against it lands in the same place. */
   .menu__panel {
     position: absolute;
     top: 100%;
@@ -192,14 +188,19 @@ const links = [
     flex-direction: column;
   }
 
+  /* The reference's rows: 16px label, 16px of air above and below, and a rule
+     between items rather than under the last one. */
   .menu__links a {
-    padding: 18px 0;
-    border-bottom: 1px solid var(--rule);
-    font-size: clamp(1.375rem, 1.2rem + 0.75vw, 1.75rem);
+    padding: 16px 0;
+    font-size: var(--fs-body);
     font-weight: 500;
-    letter-spacing: -0.015em;
+    letter-spacing: 0;
     color: var(--black);
     text-decoration: none;
+  }
+
+  .menu__links a:not(:last-child) {
+    border-bottom: 1px solid var(--rule);
   }
 
   .menu__links a:active {
@@ -211,16 +212,25 @@ const links = [
     display: flex;
     gap: 10px;
     margin-top: auto;
-    padding-top: 32px;
+    padding-top: 24px;
   }
 
+  /* Hugging the label, like theirs: theirs comes to about 47px from 14px of
+     padding on a 16px line. Ours needs the line-height pulled in from the
+     body's 1.45 as well, or the same padding lands 6px taller. */
   .menu__actions .pill {
     flex: 1 1 0;
     min-width: 0;
-    padding-inline: 12px;
+    min-height: 0;
+    padding: 13px 18px;
+    line-height: 1.2;
   }
 
   @media (min-width: 62.5em) {
+    .hdr {
+      --hdr-h: 72px;
+    }
+
     .menu {
       display: none;
     }
@@ -229,22 +239,8 @@ const links = [
       display: flex;
     }
 
-    .hdr__phone,
     .hdr__cta {
       display: inline-flex;
-    }
-
-    .hdr__phone {
-      align-items: center;
-      min-height: 24px;
-      font-size: var(--fs-small);
-      font-weight: 500;
-      text-decoration: none;
-    }
-
-    .hdr__phone:hover {
-      text-decoration: underline;
-      text-underline-offset: 0.2em;
     }
   }
 </style>

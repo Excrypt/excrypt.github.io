@@ -10,9 +10,11 @@
 interface Props {
   /** On an accent ground the tile inverts so the mark keeps its figure/ground. */
   invert?: boolean;
+  /** The header's size: a smaller tile and label, so the bar can be 56px. */
+  compact?: boolean;
   class?: string;
 }
-const { invert = false, class: className = '' } = Astro.props;
+const { invert = false, compact = false, class: className = '' } = Astro.props;
 
 // x, y, width for each filled run of the glyph, on a 5x7 grid.
 const PIXELS = [
@@ -30,7 +32,15 @@ const PIXELS = [
 ];
 ---
 
-<a class:list={['wordmark', invert && 'wordmark--invert', className]} href="/">
+<a
+  class:list={[
+    'wordmark',
+    invert && 'wordmark--invert',
+    compact && 'wordmark--compact',
+    className,
+  ]}
+  href="/"
+>
   <span class="wordmark__tile">
     <svg class="wordmark__b" viewBox="0 0 5 7" aria-hidden="true" focusable="false">
       {PIXELS.map(([x, y, w]) => <rect x={x} y={y} width={w} height="1" />)}
@@ -77,5 +87,24 @@ const PIXELS = [
     font-size: 1.375rem;
     font-weight: 500;
     letter-spacing: -0.035em;
+  }
+
+  /* The header's mark, sized so the bar comes to 56px like the reference's. */
+  .wordmark--compact {
+    gap: 8px;
+  }
+
+  .wordmark--compact .wordmark__tile {
+    width: 28px;
+    height: 28px;
+  }
+
+  .wordmark--compact .wordmark__b {
+    width: 13px;
+    height: 18px;
+  }
+
+  .wordmark--compact .wordmark__text {
+    font-size: 1.125rem;
   }
 </style>

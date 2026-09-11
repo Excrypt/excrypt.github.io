@@ -70,6 +70,7 @@
   --c-pink: #ffc0cb;
   --c-periwinkle: #c5d3e8;
   --c-stone: #f8f7f4; /* their logo-cloud cell — warm off-white */
+  --c-cool: #f0f4f8; /* their pricing hero and CTA band ground */
 
   /* Pastel tints — the fills behind "Don't use the web. Scale it." and the stat
      stack under it. All carry black text (13:1 or better); none carries white. */
@@ -81,6 +82,9 @@
   --t-lemon: #fffacd;
   --t-mint: #a4f9c6;
   --t-lime: #e1eb80;
+  /* The two chip tints their pricing rows use that the set above lacks. */
+  --t-rose: #ffdfe5;
+  --t-peach: #ffeae3;
 
   --blue-50: #f6f6ff;
   --blue-100: #e0e0ff;
@@ -98,17 +102,27 @@
 
   --text: var(--black);
   --text-muted: var(--grey-600);
-  --rule: var(--grey-200);
+  /* Every hairline on the site — section rules, the rails, card borders, the
+     grid bands. A pale periwinkle rather than a grey: it is within a shade of the
+     rule the reference draws above its own feature rows (#d3deed), and it sits
+     in the same family as the sky and the tints instead of reading as a neutral
+     laid over them. */
+  --rule: #d0def0;
   --surface: var(--white);
   --surface-sunk: var(--grey-50);
 
-  /* Radius — their scale. Pills use --r-full. */
-  --r-xs: 0.25rem;
-  --r-sm: 0.375rem;
-  --r-md: 0.5rem;
-  --r-lg: 0.625rem;
-  --r-xl: 0.75rem;
-  --r-2xl: 1rem;
+  /* Radius. Measured off the reference, not guessed: every framed box on it —
+     panels, cards, the event card, the logo strip — is square, 0px. Only the
+     pills are rounded. The scale keeps its names so no call site changes, but
+     everything a card, panel or field uses now resolves to square. The two
+     small steps are for things small enough that a hard corner reads as a
+     rendering fault rather than as a decision. Pills use --r-full. */
+  --r-xs: 2px;
+  --r-sm: 2px;
+  --r-md: 0;
+  --r-lg: 0;
+  --r-xl: 0;
+  --r-2xl: 0;
   --r-full: 62.4375rem;
 
   /* Layout */
@@ -201,8 +215,12 @@ html {
 }
 
 body {
+  /* The page's ground, as a token so the header and footer can match whatever
+     page they are on rather than hardcoding white. */
+  --page-ground: var(--white);
+
   margin: 0;
-  background: var(--white);
+  background: var(--page-ground);
   color: var(--text);
   font-family: var(--font);
   font-size: var(--fs-body);
@@ -210,6 +228,13 @@ body {
   letter-spacing: 0.01em;
   font-synthesis-weight: none;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Opt-in cool-grey ground, set per page with BaseLayout's `ground` prop. Only
+   the booking page uses it. The header and footer read the same token, so the
+   chrome goes grey with the page instead of leaving two white bars on it. */
+body.ground-grey {
+  --page-ground: var(--c-cool);
 }
 
 img,
@@ -380,7 +405,9 @@ a:hover {
 }
 
 /* 6. Pills ---------------------------------------------------------------
-   Fully rounded, 44px, chevron on the primary. */
+   Fully rounded, 44px, chevron on the primary. On hover, keyboard focus and
+   press the pill squares off — the reference's button interaction, timing and
+   curve read off its live stylesheet (0.2s, cubic-bezier(.3, 0, .15, 1)). */
 
 .pill {
   display: inline-flex;
@@ -399,9 +426,16 @@ a:hover {
   white-space: nowrap;
   cursor: pointer;
   transition:
-    background-color 140ms ease,
-    border-color 140ms ease,
-    color 140ms ease;
+    background-color 200ms cubic-bezier(0.3, 0, 0.15, 1),
+    border-color 200ms cubic-bezier(0.3, 0, 0.15, 1),
+    border-radius 200ms cubic-bezier(0.3, 0, 0.15, 1),
+    color 200ms cubic-bezier(0.3, 0, 0.15, 1);
+}
+
+.pill:hover,
+.pill:focus-visible,
+.pill:active {
+  border-radius: 0;
 }
 
 .pill--primary {
@@ -429,6 +463,16 @@ a:hover {
   background: var(--grey-200);
 }
 
+/* The reference's secondary: periwinkle, black text, lightening on hover. */
+.pill--secondary {
+  background: var(--c-periwinkle);
+  color: var(--black);
+}
+
+.pill--secondary:hover {
+  background: color-mix(in oklab, var(--c-periwinkle) 70%, var(--white));
+}
+
 .pill--quiet {
   background: var(--grey-100);
   color: var(--black);
@@ -440,7 +484,9 @@ a:hover {
 
 .pill--ghost {
   background: transparent;
-  border-color: var(--grey-300);
+  /* Resting border on the site's rule colour; hover still goes to black, which
+     is where the feedback lives. */
+  border-color: var(--rule);
   color: var(--black);
 }
 
@@ -719,6 +765,50 @@ a:hover {
   background: var(--c-gold);
 }
 
+/* Link wipe — the reference's nav and footer link hover. A fill sits behind the
+   label clipped to nothing on its right edge and opens left to right on enter;
+   on leave it fades out and the clip snaps back once it is invisible, so the
+   next hover wipes in from the left again rather than un-wiping. Timings read
+   off their stylesheet: 0.2s enter on their motion curve, 0.1s linear leave.
+   The negative margin keeps the label on its column edge despite the padding. */
+.wipe {
+  position: relative;
+  isolation: isolate;
+  padding: 0.2em 0.375em;
+  margin-inline: -0.375em;
+  text-decoration: none;
+}
+
+.wipe::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--wipe-fill, var(--c-red));
+  clip-path: inset(0 100% 0 0);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 100ms linear,
+    clip-path 0s linear 100ms;
+}
+
+.wipe:hover,
+.wipe:focus-visible,
+.wipe:active {
+  color: var(--black);
+}
+
+.wipe:hover::before,
+.wipe:focus-visible::before,
+.wipe:active::before {
+  clip-path: inset(0);
+  opacity: 1;
+  transition:
+    opacity 0s linear,
+    clip-path 200ms cubic-bezier(0.3, 0, 0.15, 1);
+}
+
 /* 9. Forms --------------------------------------------------------------- */
 
 .field {
@@ -735,7 +825,10 @@ a:hover {
 .field textarea {
   width: 100%;
   padding: 12px 14px;
-  border: 1px solid var(--grey-300);
+  /* Resting border on the site's rule colour. Hover and focus keep their darker
+     steps: those carry the interaction feedback, and flattening them into the
+     rule would leave a focused field indistinguishable from an idle one. */
+  border: 1px solid var(--rule);
   border-radius: var(--r-md);
   background: var(--white);
   color: var(--black);
@@ -759,7 +852,197 @@ a:hover {
   min-height: 128px;
 }
 
-/* 10. Accessibility + motion --------------------------------------------- */
+/* 10. Subpage layout -----------------------------------------------------
+   The kit the standalone pages are built from, after the reference's own
+   secondary pages: a bordered hero holding a left text lock-up, then a stack of
+   full-width bands that alternate between the page's grey ground and white. */
+
+.page-hero {
+  padding-block: 48px var(--space-section);
+  border-bottom: 1px solid var(--rule);
+  background: var(--page-ground);
+}
+
+.page-hero__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.page-hero h1 {
+  max-width: 22ch;
+}
+
+.page-hero__body {
+  max-width: 56ch;
+  color: var(--text-muted);
+}
+
+.page-hero__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* `page-band`, not `band`: GridBand.astro's root element is `.band`, and a
+   global rule of that name lands on it — the padding below stretched every grid
+   band on the home page past its square cells, which left the cell separators
+   floating in the middle with a gap above and below. */
+.page-band {
+  padding-block: var(--space-section);
+}
+
+.page-band + .page-band,
+.page-band--ruled {
+  border-top: 1px solid var(--rule);
+}
+
+/* The alternating band. White for now — the pages are white throughout, and the
+   hairline between bands carries the separation. Switch this back to
+   `var(--c-cool)` to get the reference's grey/white rhythm. */
+.page-band--alt {
+  background: var(--white);
+}
+
+.page-band__head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 36px;
+}
+
+.page-band__head h2 {
+  max-width: 24ch;
+}
+
+.page-band__head .lead {
+  max-width: 58ch;
+  color: var(--text-muted);
+}
+
+/* A text column beside a wider one. */
+.split {
+  display: grid;
+  gap: 24px;
+}
+
+.tiles {
+  display: grid;
+  gap: 16px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  border: 1px solid var(--rule);
+  background: var(--white);
+}
+
+.tile__num {
+  font-size: var(--fs-h2);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.tile--tint {
+  border-color: transparent;
+  background: var(--tint, var(--t-periwinkle));
+}
+
+/* A row list with a mono chip on the left, as the pricing cards use. */
+.checklist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checklist li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.chip {
+  flex: 0 0 auto;
+  padding: 0 0.25em;
+  background: var(--tint, var(--t-periwinkle));
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.cta-band {
+  padding-block: var(--space-section);
+  border-top: 1px solid var(--rule);
+  background: var(--white);
+}
+
+.cta-band__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cta-band h2 {
+  max-width: 20ch;
+}
+
+.cta-band__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (min-width: 48rem) {
+  .page-hero {
+    padding-block: 72px var(--space-section);
+  }
+
+  .tiles-2,
+  .tiles-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tiles-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .cta-band__inner {
+    flex-direction: row;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .cta-band__actions {
+    margin-left: auto;
+  }
+}
+
+@media (min-width: 62.5em) {
+  .split {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 48px;
+    align-items: start;
+  }
+
+  .split--flip > :first-child {
+    order: 2;
+  }
+
+  .tiles-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* 11. Accessibility + motion --------------------------------------------- */
 
 :focus-visible {
   outline: 2px solid var(--accent);
